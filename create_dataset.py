@@ -1,16 +1,15 @@
 from datetime import timedelta
-import matplotlib.pyplot as plt
 from meteostat import Hourly
 import pandas as pd
 import requests
 
-def load_power_plant_data(path: str = 'data/power_plant.csv') -> pd.DataFrame:
-    df_power_plant = pd.read_csv(path, delimiter=';')
-    df_power_plant['Datetime'] = pd.to_datetime(df_power_plant['Datetime'], format='%Y-%m-%d %H:%M:00')
-    df_power_plant['Datetime'] = (df_power_plant['Datetime']
-                                    .dt.tz_localize('Europe/Berlin', ambiguous='infer', nonexistent='shift_forward')
-                                    .dt.tz_convert('UTC'))
-    return df_power_plant
+def load_dataset(path: str) -> pd.DataFrame:
+    df = pd.read_csv(path, delimiter=';')
+    df['Datetime'] = pd.to_datetime(df['Datetime'], format='%Y-%m-%d %H:%M:00')
+    df['Datetime'] = (df['Datetime']
+                      .dt.tz_localize('Europe/Berlin', ambiguous='infer', nonexistent='shift_forward')
+                      .dt.tz_convert('UTC'))
+    return df
 
 def load_market_data(path: str = 'data/day_ahead_prices.csv') -> pd.DataFrame:
     df_market = pd.read_csv(path, delimiter=';')
@@ -61,10 +60,16 @@ def fetch_weather_data(start: pd.Timestamp, end: pd.Timestamp, station_id: str) 
     return df_weather
 
 # load power plant data
-df = load_power_plant_data(path='data/power_plant.csv')
+df = load_dataset(path='data/power_plant.csv')
+
+# load power consumption data
+df_power_consumption = load_dataset(path='data/power_consumption.csv')
+
+# load power generation data
+df_power_generation = load_dataset(path='data/power_generation.csv')
 
 # load market data
-df_market = load_market_data(path='data/day_ahead_prices.csv')
+df_market = load_dataset(path='data/day_ahead_prices.csv')
 
 # fetch holiday data
 years = df['Datetime'].dt.strftime("%Y").unique()
@@ -85,6 +90,8 @@ df['IsWeekend'] = df['DayOfWeek'].isin([5,6]).astype(int)
 
 # merge dataframes
 df = pd.merge(df, df_weather, on=['Datetime'], how='left')
+df = pd.merge(df, df_power_consumption, on=['Datetime'], how='left')
+df = pd.merge(df, df_power_generation, on=['Datetime'], how='left')
 df = pd.merge(df, df_market, on=['Datetime'], how='left')
 df.to_csv('data/dataset.csv', sep=';', index=False)
 print(df.head())
