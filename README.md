@@ -25,3 +25,6 @@
 6. Iterate through 3-5 until satified with the results
 
 
+### To-Do
+- Wetterdaten aus der 50Hertz Regio fetchen
+    - Mittelwert bilden aus alle Wetterstationen?

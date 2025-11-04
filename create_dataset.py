@@ -11,14 +11,6 @@ def load_dataset(path: str) -> pd.DataFrame:
                       .dt.tz_convert('UTC'))
     return df
 
-def load_market_data(path: str = 'data/day_ahead_prices.csv') -> pd.DataFrame:
-    df_market = pd.read_csv(path, delimiter=';')
-    df_market['Datetime'] = pd.to_datetime(df_market['Datetime'], format='%Y-%m-%d %H:%M:00')
-    df_market['Datetime'] = (df_market['Datetime']
-                                .dt.tz_localize('Europe/Berlin', ambiguous='infer', nonexistent='shift_forward')
-                                .dt.tz_convert('UTC'))
-    return df_market
-
 def fetch_holiday_data(years: list[int], region: str = 'de-be') -> pd.DataFrame:
     holiday_dates = []
     for year in years:
