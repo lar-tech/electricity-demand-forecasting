@@ -17,7 +17,7 @@ def fetch_holiday_data(years: list[int], region: str = 'de-be') -> pd.DataFrame:
         url = f"https://digidates.de/api/v1/germanpublicholidays?year={year}&region={region}"
         response = requests.get(url)
         holidays = response.json()
-        [holiday_dates.append(holiday) for holiday in holidays.keys()]
+        [holiday_dates.append(pd.to_datetime(holiday)) for holiday in holidays.keys()]
 
     df_holidays = pd.DataFrame(data={"Holiday": holiday_dates})
     return df_holidays
@@ -74,7 +74,7 @@ df_weather = fetch_weather_data(start=start, end=end, station_id='10582')
 df_weather.to_csv('data/weather.csv', index=False)
 
 # time-based features
-df['Holiday'] = df['Datetime'].dt.date.isin(df_holidays['Holiday'])
+df['Holiday'] = df['Datetime'].dt.date.isin(df_holidays['Holiday'].dt.date)
 df['Hour'] = df['Datetime'].dt.hour
 df['DayOfWeek'] = df['Datetime'].dt.dayofweek
 df['Month'] = df['Datetime'].dt.month
