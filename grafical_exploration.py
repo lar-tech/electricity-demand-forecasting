@@ -3,25 +3,38 @@ import pandas as pd
 import seaborn as sns
 import calendar
 
+plt.rcParams['font.family'] = 'Fira Sans'
+plt.rcParams['font.size'] = 20
+EXPORT = True
+PLOT = False
+
 def plot_power_time(df):
     plt.figure(figsize=(10, 6))
     plt.plot(df['Datetime'], df['Power'])
-    plt.title("Power over Time")
+    if not EXPORT:
+        plt.title("Power over Time")
     plt.ylabel("Power [MWh]")
     plt.grid()
     plt.tight_layout()
-    # plt.show()
+    if EXPORT:
+        plt.savefig('plots/power_over_time.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 def plot_power_distribution_by_year(df):
     df['Year'] = df['Datetime'].dt.year
     plt.figure(figsize=(10, 6))
     sns.violinplot(data=df, x='Year', y='Power')
-    plt.title("Distribution of Power by Year")
+    if not EXPORT:
+        plt.title("Distribution of Power by Year")
     plt.xlabel("")
     plt.ylabel("Power [MWh]")
     plt.grid()
     plt.tight_layout()
-    # plt.show()
+    if EXPORT:
+        plt.savefig('plots/power_distribution_by_year.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 def plot_average_annual_course(df):
     df['DayOfYear'] = df['Datetime'].dt.dayofyear
@@ -37,12 +50,16 @@ def plot_average_annual_course(df):
         color = 'lightgray' if i % 2 == 0 else 'white'
         plt.axvspan(month_days[i], month_days[i+1], color=color, alpha=0.2)
     plt.xticks([(month_days[i] + month_days[i+1]) / 2 for i in range(12)], month_names)
-    plt.title("Average Annual Course of Power")
+    if not EXPORT:
+        plt.title("Average Annual Course of Power")
     plt.xlabel("Month")
     plt.ylabel("Average Power [MWh]")
     plt.grid()
     plt.tight_layout()
-    # plt.show()
+    if EXPORT:
+        plt.savefig('plots/average_annual_course.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 def plot_power_distribution_by_day_and_season(df):
     month = df['Datetime'].dt.month
@@ -66,9 +83,13 @@ def plot_power_distribution_by_day_and_season(df):
         ax.set_xticks(range(1, 8))
         ax.set_xticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
         ax.grid()
-    fig.suptitle("Average Power by Day – per Season", y=0.98)
+    if not EXPORT:
+        fig.suptitle("Average Power by Day – per Season", y=0.98)
     plt.tight_layout()
-    # plt.show()
+    if EXPORT:
+        plt.savefig('plots/power_distribution_by_day_and_season.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 def plot_average_power_by_day_and_season(df):
     month = df['Datetime'].dt.month
@@ -83,20 +104,30 @@ def plot_average_power_by_day_and_season(df):
 
     grp = df.groupby(['Season','DayOfWeek'])['Power'].agg(['mean', 'std']).reset_index()
 
-    fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharey=True, sharex=True)
+
     for ax, season in zip(axes.flat, order):
         temp = grp[grp['Season'] == season]
         ax.plot(temp['DayOfWeek'], temp['mean'])
         ax.fill_between(temp['DayOfWeek'], temp['mean'] - temp['std'], temp['mean'] + temp['std'], alpha=0.2)
         ax.set_title(season)
-        ax.set_xlabel("Day of the Week")
-        ax.set_ylabel("Average Power [MWh]")
+        # ax.set_xlabel("Day of the Week")
+        # ax.set_ylabel("Avg. Power [MWh]")
         ax.set_xticks(range(0, 6))
         ax.grid()
 
-    fig.suptitle("Average Power by Day – per Season", y=0.98)
+    axes[1,0].set_xlabel("Day of the Week")
+    axes[1,1].set_xlabel("Day of the Week")
+    axes[0,0].set_ylabel("Avg. Power [MWh]")
+    axes[1,0].set_ylabel("Avg. Power [MWh]")
+
+    if not EXPORT:
+        fig.suptitle("Average Power by Day – per Season", y=0.98)
     plt.tight_layout()
-    # plt.show()
+    if EXPORT:
+        plt.savefig('plots/average_power_by_day_and_season.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 def plot_average_power_by_hour_and_season(df):
     df['Hour'] = df['Datetime'].dt.hour
@@ -112,20 +143,28 @@ def plot_average_power_by_hour_and_season(df):
 
     grp = df.groupby(['Season','Hour'])['Power'].agg(['mean', 'std']).reset_index()
 
-    fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharey=True, sharex=True)
     for ax, season in zip(axes.flat, order):
         temp = grp[grp['Season'] == season]
         ax.plot(temp['Hour'], temp['mean'])
         ax.fill_between(temp['Hour'], temp['mean'] - temp['std'], temp['mean'] + temp['std'], alpha=0.2)
         ax.set_title(season)
-        ax.set_xlabel("Hour of the Day")
-        ax.set_ylabel("Average Power [MWh]")
+        # ax.set_xlabel("Hour of the Day")
+        # ax.set_ylabel("Avg. Power [MWh]")
         ax.set_xticks(range(0, 24, 3))
         ax.grid()
+    axes[1,0].set_xlabel("Hour of the Day")
+    axes[1,1].set_xlabel("Hour of the Day")
+    axes[0,0].set_ylabel("Avg. Power [MWh]")
+    axes[1,0].set_ylabel("Avg. Power [MWh]")
 
-    fig.suptitle("Average Power by Hour – per Season", y=0.98)
+    if not EXPORT:
+        fig.suptitle("Average Power by Hour – per Season", y=0.98)
     plt.tight_layout()
-    # plt.show()
+    if EXPORT:
+        plt.savefig('plots/average_power_by_hour_and_season.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 def plot_power_generation_by_source(df):
     plt.figure(figsize=(10,6))
@@ -150,59 +189,77 @@ def plot_power_generation_by_source(df):
                 'Hard Coal',
                 'Natural Gas',
                 'Pumped Storage',
-                'Other Conventional'], loc='upper right')
+                'Other Conventional'], loc='upper right', ncols=3, fontsize=15)
     plt.xlim(pd.Timestamp('2023-07-10'), pd.Timestamp('2023-07-20'))
     plt.xticks(rotation=45)
     plt.grid()
-    plt.title("Power Generation by Source")
+    if not EXPORT:
+        plt.title("Power Generation by Source")
     plt.tight_layout()
-    # plt.show()
+    if EXPORT:
+        plt.savefig('plots/power_generation_by_source.png', dpi = 500, bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 def plot_grid_and_residual_load_over_time(df):
     plt.figure(figsize=(10,6))
     plt.plot(df['Datetime'], df['Grid Load'], color='tab:blue', label='Grid Load')
     plt.plot(df['Datetime'], df['Residual Load'], color='tab:orange', alpha=0.7, label='Residual Load')
-    plt.title("Grid and Residual Load Over Time")
+    if not EXPORT:
+        plt.title("Grid and Residual Load Over Time")
     plt.xlabel("Time")
     plt.ylabel("Power [MW]")
     plt.grid()
-    plt.legend(loc="upper right")
+    plt.legend(loc="lower right")
     plt.tight_layout()
-    # plt.show()
+    if EXPORT:
+        plt.savefig('plots/grid_and_residual_load_over_time.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 def plot_power_and_temperature_over_time(df):
     plt.figure(figsize=(10, 6))
     plt.plot(df['Datetime'], df['Power'], label='Power')
     plt.plot(df['Datetime'], df['Temperature'], color='tab:orange', alpha=0.7, label='Temperature')
-    plt.title("Power and Temperature over Time")
+    if not EXPORT:
+        plt.title("Power and Temperature over Time")
     plt.ylabel("Power [MWh]")
     plt.grid()
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.tight_layout()
-    # plt.show()
+    if EXPORT:
+        plt.savefig('plots/power_and_temperature_over_time.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 def plot_correlation_heatmap(df):
+    plt.rcParams['font.size'] = 12
+    plt.figure()
     num_cols = ['Power','Solar Generation','Wind Onshore Generation', 'Lignite Generation' ,'Grid Load', 'Residual Load',
                 'Temperature','Average Wind Speed','Sunshine Duration']
 
     corr = df[num_cols].corr()
-    sns.heatmap(corr, cmap='coolwarm', annot=True, fmt=".2f", center=0, square=True,annot_kws={"size": 8})
-    plt.title("Correlation between Power, Generation and Weather")
+    sns.heatmap(corr, cmap='coolwarm', annot=True, fmt=".2f", center=0, square=True, annot_kws={"size": 8})
+    if not EXPORT:
+        plt.title("Correlation between Power, Generation and Weather")
     plt.tight_layout()
-    plt.show()
+    if EXPORT:
+        plt.savefig('plots/correlation_heatmap.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
 
 # load dataset
 df = pd.read_csv('data/dataset.csv', delimiter=';')
 df['Datetime'] = pd.to_datetime(df['Datetime'])
 
 # plotting
-plot_power_time(df)
-plot_power_distribution_by_year(df)
-plot_average_annual_course(df)
-plot_power_distribution_by_day_and_season(df)
-plot_average_power_by_day_and_season(df)
-plot_average_power_by_hour_and_season(df)
-plot_power_generation_by_source(df)
-plot_grid_and_residual_load_over_time(df)
-plot_power_and_temperature_over_time(df)
+# plot_power_time(df)
+# plot_power_distribution_by_year(df)
+# plot_average_annual_course(df)
+# plot_power_distribution_by_day_and_season(df)
+# plot_average_power_by_day_and_season(df)
+# plot_average_power_by_hour_and_season(df)
+# plot_power_generation_by_source(df)
+# plot_grid_and_residual_load_over_time(df)
+# plot_power_and_temperature_over_time(df)
 plot_correlation_heatmap(df)
