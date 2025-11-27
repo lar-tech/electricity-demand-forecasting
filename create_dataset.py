@@ -1,6 +1,7 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
+import re
 from meteostat import Hourly
-import pandas as pd
+import pandas as pd 
 import requests
 
 def load_dataset(path: str) -> pd.DataFrame:
@@ -21,6 +22,68 @@ def fetch_holiday_data(years: list[int], region: str = 'de-be') -> pd.DataFrame:
 
     df_holidays = pd.DataFrame(data={"Holiday": holiday_dates})
     return df_holidays
+
+def school_holidays_berlin(year_start=2015, year_end=2025, output_file="schoolholidays_berlin.csv"):
+
+    def convert(d_str, jahr):
+        d_str = d_str.strip(".")
+        day, month = map(int, d_str.split("."))
+        return datetime(jahr, month, day)
+                
+
+    # Ergebnis-DataFrame vorher anlegen (leer)
+    df_schoolholidays_berlin = pd.DataFrame(columns=["date", "holiday"])
+    for year in range(year_start, year_end + 1):
+        # Schulferien.org Webseite für ein Jahr
+        url = f"https://www.schulferien.org/deutschland/ferien/{year}/"
+        df = pd.read_html(url)[0]
+        df_berlin = df[(df.iloc[:, 0] == "Berlin") | (df.iloc[:, 0] == "*  Berlin")].copy()
+
+        # Werte aus dem Spaltennamen extrahieren
+        for i in range(1,7,1):
+            spaltenkopf = df_berlin.columns[i]
+            ferienname = spaltenkopf[1].strip()
+            # Zeitbereiche umwandeln
+            ferientage = df_berlin.iloc[:, i].values[0].split(", ")[0]
+            ferientage = ferientage.replace("*", "")
+            parts = ferientage.split("+")
+
+            range_part = None
+            extra_parts = []
+
+            for p in parts:
+                if "-" in p:
+                    range_part = p
+                else:
+                    extra_parts.append(p)
+
+            if range_part:
+                # Start- und Enddatum extrahieren
+                
+                start_str, end_str = re.split(r"\s*-\s*", range_part.strip().replace(" ", ""))
+                start = convert(start_str, year)
+                end   = convert(end_str, year)
+                if end < start:
+                    # falls der Zeitraum über den Jahreswechsel geht
+                    end = end.replace(year=year + 1)
+                # Alle Tage im Zeitraum erzeugen
+                days = list(pd.date_range(start, end, freq="D"))
+                for extra in extra_parts:
+                    extra_date = convert(extra.strip(), year)
+                    days.append(extra_date)
+            else:
+                days = []
+                for extra in extra_parts:
+                    extra_date = convert(extra.strip(), year)
+                    days.append(extra_date)
+
+
+            # alle Tage in DataFrame speichern ohne das sie sich überschreiben
+            new_rows = pd.DataFrame({"date": days, "holiday": ferienname})
+            df_schoolholidays_berlin = pd.concat([df_schoolholidays_berlin, new_rows], ignore_index=True)
+
+    # alle Daten in csv speichern
+    df_schoolholidays_berlin.to_csv(output_file, index=False)
 
 def fetch_weather_data(start: pd.Timestamp, end: pd.Timestamp, station_id: str) -> pd.DataFrame:
     df_weather = Hourly(station_id, start, end).fetch()
@@ -50,6 +113,8 @@ def fetch_weather_data(start: pd.Timestamp, end: pd.Timestamp, station_id: str) 
                     .reset_index())
     
     return df_weather
+
+
 
 # load power plant data
 df = load_dataset(path='data/power_plant.csv')

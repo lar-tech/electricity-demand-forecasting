@@ -3,3 +3,4 @@
 .vscode/
 test.ipynb
 plots/
+catboost_info/
