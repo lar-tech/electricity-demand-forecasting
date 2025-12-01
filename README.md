@@ -28,3 +28,11 @@
 ### To-Do
 - Wetterdaten aus der 50Hertz Regio fetchen
     - Mittelwert bilden aus alle Wetterstationen?
+
+Ferien:
+Winterferien: 1
+Osterferien: 2
+Pfingstferien: 3
+Sommerferien: 4
+Herbstferien: 5
+Weihnachtsferien: 6
