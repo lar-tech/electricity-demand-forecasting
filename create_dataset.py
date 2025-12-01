@@ -10,6 +10,13 @@ def load_dataset(path: str) -> pd.DataFrame:
     df['Datetime'] = (df['Datetime']
                       .dt.tz_localize('Europe/Berlin', ambiguous='infer', nonexistent='shift_forward')
                       .dt.tz_convert('UTC'))
+    # resample to hourly resolution
+    df = (df.set_index('Datetime')
+          .resample('1h')
+          .mean()
+          .multiply(4.0)
+          .reset_index())
+
     return df
 
 def fetch_holiday_data(years: list[int], region: str = 'de-be') -> pd.DataFrame:
@@ -73,39 +80,39 @@ def scrap_school_holidays_data(year_start=2015, year_end=2025, path="data/holida
                     extra_date = convert(extra.strip(), year)
                     days.append(extra_date)
 
-            holiday_mapping = {"Winterferien": "2",
-                               "Osterferien": "3",
-                               "Pfingstferien": "4",
-                               "Sommerferien": "5",
-                               "Herbstferien": "6",
-                               "Weihnachtsferien": "7"}
+            holiday_mapping = {"Winterferien": "1",
+                               "Osterferien": "2",
+                               "Pfingstferien": "3",
+                               "Sommerferien": "4",
+                               "Herbstferien": "5",
+                               "Weihnachtsferien": "6"}
             holiday_name = holiday_mapping.get(holiday_name, holiday_name)
             new_rows = pd.DataFrame({"date": days, "holiday": holiday_name})
             df_schoolholidays = pd.concat([df_schoolholidays, new_rows], ignore_index=True).sort_values(by="date")
 
     # correct bridge holidays
-    bridge_holidays = {(datetime(2015, 5, 15), "8"),
-                       (datetime(2016, 5, 6), "8"),
-                       (datetime(2017, 5, 24), "8"),
-                       (datetime(2017, 5, 26), "8"),
-                       (datetime(2017, 10, 2), "8"),
-                       (datetime(2018, 4, 30), "8"),
-                       (datetime(2018, 5, 11), "8"),
-                       (datetime(2019, 5, 31), "8"),
-                       (datetime(2019, 10, 4), "8"), 
-                       (datetime(2020, 5, 8), "8"),
-                       (datetime(2020, 5, 22), "8"),
-                       (datetime(2021, 5, 14), "8"),
-                       (datetime(2021, 10, 4), "8"),
-                       (datetime(2021, 12, 23), "8"),
-                       (datetime(2022, 3, 7), "8"),
-                       (datetime(2022, 5, 27), "8"),
-                       (datetime(2023, 5, 19), "8"),
-                       (datetime(2023, 10, 2), "8"),
-                       (datetime(2024, 5, 10), "8"),
-                       (datetime(2024, 10, 4), "8"),
-                       (datetime(2025, 5, 2), "8"),
-                       (datetime(2025, 5, 30), "8")}
+    bridge_holidays = {(datetime(2015, 5, 15), "7"),
+                       (datetime(2016, 5, 6), "7"),
+                       (datetime(2017, 5, 24), "7"),
+                       (datetime(2017, 5, 26), "7"),
+                       (datetime(2017, 10, 2), "7"),
+                       (datetime(2018, 4, 30), "7"),
+                       (datetime(2018, 5, 11), "7"),
+                       (datetime(2019, 5, 31), "7"),
+                       (datetime(2019, 10, 4), "7"), 
+                       (datetime(2020, 5, 8), "7"),
+                       (datetime(2020, 5, 22), "7"),
+                       (datetime(2021, 5, 14), "7"),
+                       (datetime(2021, 10, 4), "7"),
+                       (datetime(2021, 12, 23), "7"),
+                       (datetime(2022, 3, 7), "7"),
+                       (datetime(2022, 5, 27), "7"),
+                       (datetime(2023, 5, 19), "7"),
+                       (datetime(2023, 10, 2), "7"),
+                       (datetime(2024, 5, 10), "7"),
+                       (datetime(2024, 10, 4), "7"),
+                       (datetime(2025, 5, 2), "7"),
+                       (datetime(2025, 5, 30), "7")}
     for date, holiday_code in bridge_holidays:
         df_schoolholidays.loc[(df_schoolholidays['date'] == date), 'holiday'] = holiday_code
 
@@ -133,13 +140,6 @@ def fetch_weather_data(start: pd.Timestamp, end: pd.Timestamp, station_id: str) 
         'coco': 'Weather Condition Code'
     })
 
-    df_weather = (df_weather
-                    .set_index('Datetime')
-                    .sort_index()
-                    .resample('15min')
-                    .interpolate(method='linear')
-                    .reset_index())
-    
     return df_weather
 
 # load power plant data
