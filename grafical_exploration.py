@@ -237,7 +237,7 @@ def plot_power_and_temperature_over_time(df):
 def plot_correlation_heatmap(df):
     plt.rcParams['font.size'] = 12
     plt.figure()
-    num_cols = ['Power','Solar Generation','Wind Onshore Generation', 'Lignite Generation' ,'Grid Load', 'Residual Load',
+    num_cols = ['Power','Solar Generation','Wind Onshore Generation', 'Lignite Generation' ,'Grid Load', 'Residual Load', 'Other Renewables Generation',
                 'Temperature','Average Wind Speed','Sunshine Duration']
 
     corr = df[num_cols].corr()
@@ -260,7 +260,7 @@ df = pd.read_csv('data/dataset.csv', delimiter=';')
 df['Datetime'] = pd.to_datetime(df['Datetime'])
 
 # plotting
-plot_power_time(df)
+# plot_power_time(df)
 # plot_power_distribution_by_year(df)
 # plot_average_annual_course(df)
 # plot_power_distribution_by_day_and_season(df)
@@ -269,5 +269,5 @@ plot_power_time(df)
 # plot_power_generation_by_source(df)
 # plot_grid_and_residual_load_over_time(df)
 # plot_power_and_temperature_over_time(df)
-# plot_correlation_heatmap(df)
+plot_correlation_heatmap(df)
 # plot_autocorrelation(df)

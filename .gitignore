@@ -4,3 +4,5 @@
 test.ipynb
 plots/
 catboost_info/
+*.pyc
+*.ipynb
