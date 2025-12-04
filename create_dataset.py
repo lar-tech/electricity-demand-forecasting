@@ -12,7 +12,7 @@ def load_dataset(path: str) -> pd.DataFrame:
                       .dt.tz_convert('UTC'))
     # resample to hourly resolution
     df = (df.set_index('Datetime')
-          .resample('1h')
+          .resample('1h', closed="left", label="right")
           .mean()
           .multiply(4.0)
           .reset_index())
@@ -142,8 +142,13 @@ def fetch_weather_data(start: pd.Timestamp, end: pd.Timestamp, station_id: str) 
 
     return df_weather
 
-# load power plant data
+# load power plant data and resample to hourly resolution
 df = load_dataset(path='data/power_plant.csv')
+df = (df.set_index('Datetime')
+        .sort_index()
+        .resample('1h', closed="left", label="right")
+        .interpolate(method='linear')
+        .reset_index())
 
 # load power consumption data
 df_power_consumption = load_dataset(path='data/power_consumption.csv')

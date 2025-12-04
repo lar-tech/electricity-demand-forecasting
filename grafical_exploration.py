@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from statsmodels.graphics.tsaplots import plot_acf
 import calendar
 
 plt.rcParams['font.family'] = 'Fira Sans'
 plt.rcParams['font.size'] = 20
-EXPORT = True
-PLOT = False
+EXPORT = False 
+PLOT = True
 
 def plot_power_time(df):
     plt.figure(figsize=(10, 6))
@@ -14,6 +15,7 @@ def plot_power_time(df):
     if not EXPORT:
         plt.title("Power over Time")
     plt.ylabel("Power [MWh]")
+    plt.xlim(pd.Timestamp('2024-01-01'), pd.Timestamp('2024-01-14'))
     plt.grid()
     plt.tight_layout()
     if EXPORT:
@@ -248,18 +250,24 @@ def plot_correlation_heatmap(df):
     if PLOT:
         plt.show()
 
+def plot_autocorrelation(df):
+    fig, ax = plt.subplots(figsize=(5, 2))
+    plot_acf(df['Power'], ax=ax, lags=60)
+    plt.show()
+
 # load dataset
 df = pd.read_csv('data/dataset.csv', delimiter=';')
 df['Datetime'] = pd.to_datetime(df['Datetime'])
 
 # plotting
 plot_power_time(df)
-plot_power_distribution_by_year(df)
-plot_average_annual_course(df)
-plot_power_distribution_by_day_and_season(df)
-plot_average_power_by_day_and_season(df)
-plot_average_power_by_hour_and_season(df)
-plot_power_generation_by_source(df)
-plot_grid_and_residual_load_over_time(df)
-plot_power_and_temperature_over_time(df)
-plot_correlation_heatmap(df)
+# plot_power_distribution_by_year(df)
+# plot_average_annual_course(df)
+# plot_power_distribution_by_day_and_season(df)
+# plot_average_power_by_day_and_season(df)
+# plot_average_power_by_hour_and_season(df)
+# plot_power_generation_by_source(df)
+# plot_grid_and_residual_load_over_time(df)
+# plot_power_and_temperature_over_time(df)
+# plot_correlation_heatmap(df)
+# plot_autocorrelation(df)
