@@ -3,6 +3,7 @@ import re
 from meteostat import Hourly
 import pandas as pd 
 import requests
+from tqdm import tqdm
 
 def load_dataset(path: str) -> pd.DataFrame:
     df = pd.read_csv(path, delimiter=';')
@@ -17,6 +18,45 @@ def load_dataset(path: str) -> pd.DataFrame:
           .multiply(4.0)
           .reset_index())
 
+    return df
+
+def fetch_smard_data(start_date: datetime, end_date: datetime, filters: dict, region: str, resolution: str) -> pd.DataFrame:
+    base_url = "https://www.smard.de/app/chart_data"
+    start_ts = int(start_date.timestamp() * 1000)
+    end_ts = int(end_date.timestamp() * 1000)
+
+    def get_timestamps(filter_id: int) -> list[int]:
+        url = f"{base_url}/{filter_id}/{region}/index_{resolution}.json"
+        response = requests.get(url, timeout=60)
+        response.raise_for_status()
+        return response.json()["timestamps"]
+    
+    def get_series(filter_id: int, timestamp: int) -> list:
+        url = f"{base_url}/{filter_id}/{region}/{filter_id}_{region}_{resolution}_{timestamp}.json"
+        response = requests.get(url, timeout=60)
+        response.raise_for_status()
+        return response.json()["series"]
+    
+    all_data = {}
+    for filter_id, column_name in tqdm(filters.items(), desc="Downloading"):
+        timestamps = get_timestamps(filter_id)
+        relevant_ts = [ts for ts in timestamps if ts <= end_ts and ts + 7*24*3600*1000 >= start_ts]
+        
+        series_data = {}
+        for ts in relevant_ts:
+            for timestamp_ms, value in get_series(filter_id, ts):
+                if timestamp_ms and start_ts <= timestamp_ms <= end_ts:
+                    series_data[timestamp_ms] = value
+        
+        all_data[column_name] = series_data
+
+    df = pd.DataFrame(all_data)
+    df.index = pd.to_datetime(df.index, unit='ms')
+    df.index.name = 'datetime'
+    df = df.sort_index()
+    df.reset_index(inplace=True)
+    df.rename(columns={"datetime": "Datetime"}, inplace=True)
+    
     return df
 
 def fetch_holiday_data(years: list[int], region: str = 'de-be') -> pd.DataFrame:
@@ -142,22 +182,46 @@ def fetch_weather_data(start: pd.Timestamp, end: pd.Timestamp, station_id: str) 
 
     return df_weather
 
-# load power plant data and resample to hourly resolution
-df = load_dataset(path='data/power_plant.csv')
+# fetch power consumption data
+consumption = {
+    410: "Grid Load",
+    4359: "Residual Load",
+    4387: "Pumped Storage Consumption"
+}
+df = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2015, 6, 1), filters=consumption, region="50Hertz", resolution="hour")
 df = (df.set_index('Datetime')
         .sort_index()
         .resample('1h', closed="left", label="right")
         .interpolate(method='linear')
         .reset_index())
 
-# load power consumption data
-df_power_consumption = load_dataset(path='data/power_consumption.csv')
+# fetch power generation data
+generation = {
+    1223: "Lignite",
+    4071: "Natural Gas",
+    4069: "Hard Coal",
+    1227: "Other Conventional",
+    1225: "Wind Offshore",
+    4067: "Wind Onshore",
+    4068: "Solar",
+    1226: "Hydro",
+    4066: "Biomass",
+    4070: "Pumped Storage",
+    1228: "Other Renewable",
+}
+df_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=generation, region="50Hertz", resolution="hour")
 
-# load power generation data
-df_power_generation = load_dataset(path='data/power_generation.csv')
+# fetch forcasted generation data
+forcasted_generation = {
+    3791: "Forecast Wind Offshore",
+    123: "Forecast Wind Onshore",
+    125: "Forecast Solar",
+    715: "Forecast Other"
+}
+df_forcasted_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=forcasted_generation, region="50Hertz", resolution="hour")
 
-# load market data
-df_market = load_dataset(path='data/day_ahead_prices.csv')
+# # load market data
+# df_market = load_dataset(path='data/day_ahead_prices.csv')
 
 # fetch holiday data
 years = df['Datetime'].dt.strftime("%Y").unique()
@@ -183,9 +247,8 @@ df['IsWeekend'] = df['DayOfWeek'].isin([5,6]).astype(int)
 
 # merge dataframes
 df = pd.merge(df, df_weather, on=['Datetime'], how='left')
-df = pd.merge(df, df_power_consumption, on=['Datetime'], how='left')
-df = pd.merge(df, df_power_generation, on=['Datetime'], how='left')
-df = pd.merge(df, df_market, on=['Datetime'], how='left')
+df = pd.merge(df, df_generation, on=['Datetime'], how='left')
+# df = pd.merge(df, df_market, on=['Datetime'], how='left')
 df.to_csv('data/dataset.csv', sep=';', index=False)
 print(df.head())
 print(df.tail())
