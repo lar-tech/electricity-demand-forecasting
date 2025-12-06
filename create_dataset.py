@@ -96,8 +96,6 @@ def scrape_school_holidays_data(year_start=2015, year_end=2025):
             df_state = df[(df.iloc[:, 0] == state) | (df.iloc[:, 0] == f"*  {state}")].copy()
             df_state.dropna()
             for i in range(1,7,1):
-                header = df_state.columns[i]
-                holiday_name = header[1].strip()
                 # convert times
                 holiday_dates = df_state.iloc[:, i].values[0].split(", ")[0]
                 holiday_dates = holiday_dates.replace("*", "")
