@@ -5,21 +5,6 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-def load_dataset(path: str) -> pd.DataFrame:
-    df = pd.read_csv(path, delimiter=';')
-    df['Datetime'] = pd.to_datetime(df['Datetime'], format='%Y-%m-%d %H:%M:00')
-    df['Datetime'] = (df['Datetime']
-                      .dt.tz_localize('Europe/Berlin', ambiguous='infer', nonexistent='shift_forward')
-                      .dt.tz_convert('UTC'))
-    # resample to hourly resolution
-    df = (df.set_index('Datetime')
-          .resample('1h', closed="left", label="right")
-          .mean()
-          .multiply(4.0)
-          .reset_index())
-
-    return df
-
 def fetch_smard_data(start_date: datetime, end_date: datetime, filters: dict, region: str, resolution: str) -> pd.DataFrame:
     base_url = "https://www.smard.de/app/chart_data"
     start_ts = int(start_date.timestamp() * 1000)
@@ -59,125 +44,136 @@ def fetch_smard_data(start_date: datetime, end_date: datetime, filters: dict, re
     
     return df
 
-def fetch_holiday_data(years: list[int], region: str = 'de-be') -> pd.DataFrame:
-    holiday_dates = []
-    for year in years:
-        url = f"https://digidates.de/api/v1/germanpublicholidays?year={year}&region={region}"
-        response = requests.get(url)
-        holidays = response.json()
-        [holiday_dates.append(pd.to_datetime(holiday)) for holiday in holidays.keys()]
+def fetch_market_data(start: str, end: str, country: str) -> pd.DataFrame:
+    url = f"https://api.energy-charts.info/price?bzn={country}&start={start}&end={end}"
+    response = requests.get(url)
+    data = response.json()
+    df = pd.DataFrame(data)
+    df['Datetime'] = pd.to_datetime(df['unix_seconds'], unit='s', utc=True).dt.tz_convert('Europe/Berlin')
+    df.rename(columns={'price': 'Day-ahead Price'}, inplace=True)
+    df = df[['Datetime', 'Day-ahead Price']]
 
-    df_holidays = pd.DataFrame(data={"Holiday": holiday_dates})
+    df = (df.set_index('Datetime')
+          .resample('1h', closed="left", label="right")
+          .mean()
+          .reset_index())
+    
+    return df
+
+def fetch_holiday_data(years: list[int]) -> pd.DataFrame:
+    regions = ['de-be', 'de-bb', 'de-mv', 'de-sn', 'de-st', 'de-th', 'de-hh']
+    holiday_counts = {}
+    
+    for year in years:
+        for region in regions:
+            url = f"https://digidates.de/api/v1/germanpublicholidays?year={year}&region={region}"
+            response = requests.get(url)
+            holidays = response.json()
+            
+            for date_str in holidays.keys():
+                date = pd.to_datetime(date_str).date()
+                holiday_counts[date] = holiday_counts.get(date, 0) + 1
+    
+    df_holidays = pd.DataFrame({
+        'Datetime': pd.to_datetime(list(holiday_counts.keys())).tz_localize('Europe/Berlin'),
+        'Holiday Count': list(holiday_counts.values())
+    })
     return df_holidays
 
-def scrap_school_holidays_data(year_start=2015, year_end=2025):
+def scrape_school_holidays_data(year_start=2015, year_end=2025):
     def convert(d_str, year):
         d_str = d_str.strip(".")
         day, month = map(int, d_str.split("."))
         return datetime(year, month, day)
-                
-    df_schoolholidays = pd.DataFrame({"date": pd.to_datetime([]), "holiday": []})
+    
+    states=["Berlin", "Brandenburg", "Sachsen", "Sachsen-Anhalt", "Thüringen", "Mecklenburg-Vorpommern", "Hamburg"]
+
+    df_schoolholidays = pd.DataFrame({"Datetime": pd.to_datetime([]), **{f"holiday_{state}": [] for state in states}})
     for year in range(year_start, year_end + 1):
         url = f"https://www.schulferien.org/deutschland/ferien/{year}/"
         df = pd.read_html(url)[0]
-        df_berlin = df[(df.iloc[:, 0] == "Berlin") | (df.iloc[:, 0] == "*  Berlin")].copy()
-        df_berlin.dropna()
-        for i in range(1,7,1):
-            header = df_berlin.columns[i]
-            holiday_name = header[1].strip()
-            # convert times
-            holiday_dates = df_berlin.iloc[:, i].values[0].split(", ")[0]
-            holiday_dates = holiday_dates.replace("*", "")
-            parts = holiday_dates.split("+")
+        for state in states:
+            df_state = df[(df.iloc[:, 0] == state) | (df.iloc[:, 0] == f"*  {state}")].copy()
+            df_state.dropna()
+            for i in range(1,7,1):
+                header = df_state.columns[i]
+                holiday_name = header[1].strip()
+                # convert times
+                holiday_dates = df_state.iloc[:, i].values[0].split(", ")[0]
+                holiday_dates = holiday_dates.replace("*", "")
+                if not any(char.isdigit() for char in holiday_dates):
+                    continue
+                parts = holiday_dates.split("+")
 
-            range_part = None
-            extra_parts = []
-            for p in parts:
-                if "-" in p:
-                    range_part = p
+                range_part = None
+                extra_parts = []
+                for p in parts:
+                    if "-" in p:
+                        range_part = p
+                    else:
+                        extra_parts.append(p)
+
+                if range_part:
+                    # Extract start and end date
+                    start_str, end_str = re.split(r"\s*-\s*", range_part.strip().replace(" ", ""))
+                    start = convert(start_str, year)
+                    end   = convert(end_str, year)
+
+                    # for christmas holidays
+                    if end < start:
+                            end = end.replace(year=year + 1)
+
+                    # generate all dates in the given range
+                    days = list(pd.date_range(start, end, freq="D"))
+                    for extra in extra_parts:
+                        extra_date = convert(extra.strip(), year)
+                        days.append(extra_date)
                 else:
-                    extra_parts.append(p)
+                    days = []
+                    for extra in extra_parts:
+                        extra_date = convert(extra.strip(), year)
+                        days.append(extra_date)
 
-            if range_part:
-                # Extract start and end date
-                start_str, end_str = re.split(r"\s*-\s*", range_part.strip().replace(" ", ""))
-                start = convert(start_str, year)
-                end   = convert(end_str, year)
+                new_rows = pd.DataFrame({"Datetime": days, f"holiday_{state}": True})
+                df_schoolholidays = pd.concat([df_schoolholidays, new_rows], ignore_index=True).sort_values(by="Datetime")
 
-                # for christmas holidays
-                if end < start:
-                    end = end.replace(year=year + 1)
 
-                # generate all dates in the given range
-                days = list(pd.date_range(start, end, freq="D"))
-                for extra in extra_parts:
-                    extra_date = convert(extra.strip(), year)
-                    days.append(extra_date)
-            else:
-                days = []
-                for extra in extra_parts:
-                    extra_date = convert(extra.strip(), year)
-                    days.append(extra_date)
-
-            holiday_mapping = {"Winterferien": "1",
-                               "Osterferien": "2",
-                               "Pfingstferien": "3",
-                               "Sommerferien": "4",
-                               "Herbstferien": "5",
-                               "Weihnachtsferien": "6"}
-            holiday_name = holiday_mapping.get(holiday_name, holiday_name)
-            new_rows = pd.DataFrame({"date": days, "holiday": holiday_name})
-            df_schoolholidays = pd.concat([df_schoolholidays, new_rows], ignore_index=True).sort_values(by="date")
-
-    # correct bridge holidays
-    bridge_holidays = {(datetime(2015, 5, 15), "7"),
-                       (datetime(2016, 5, 6), "7"),
-                       (datetime(2017, 5, 24), "7"),
-                       (datetime(2017, 5, 26), "7"),
-                       (datetime(2017, 10, 2), "7"),
-                       (datetime(2018, 4, 30), "7"),
-                       (datetime(2018, 5, 11), "7"),
-                       (datetime(2019, 5, 31), "7"),
-                       (datetime(2019, 10, 4), "7"), 
-                       (datetime(2020, 5, 8), "7"),
-                       (datetime(2020, 5, 22), "7"),
-                       (datetime(2021, 5, 14), "7"),
-                       (datetime(2021, 10, 4), "7"),
-                       (datetime(2021, 12, 23), "7"),
-                       (datetime(2022, 3, 7), "7"),
-                       (datetime(2022, 5, 27), "7"),
-                       (datetime(2023, 5, 19), "7"),
-                       (datetime(2023, 10, 2), "7"),
-                       (datetime(2024, 5, 10), "7"),
-                       (datetime(2024, 10, 4), "7"),
-                       (datetime(2025, 5, 2), "7"),
-                       (datetime(2025, 5, 30), "7")}
-    for date, holiday_code in bridge_holidays:
-        df_schoolholidays.loc[(df_schoolholidays['date'] == date), 'holiday'] = holiday_code
-
+    agg_dict = {col: "any" for col in df_schoolholidays.columns if col != "Datetime"}
+    df_schoolholidays = (df_schoolholidays.groupby("Datetime", as_index=False).agg(agg_dict))
+    holiday_cols = [col for col in df_schoolholidays.columns if col.startswith("holiday_")]
+    df_schoolholidays["school_holiday"] = df_schoolholidays[holiday_cols].sum(axis=1)
+    df_schoolholidays = df_schoolholidays[["Datetime", "school_holiday"]]
+        
     return df_schoolholidays
 
-def fetch_weather_data(start: pd.Timestamp, end: pd.Timestamp, station_id: str) -> pd.DataFrame:
-    df_weather = Hourly(station_id, start, end).fetch()
-    df_weather.index = df_weather.index.tz_localize('UTC')
-    df_weather = df_weather.reset_index()
+def fetch_weather_data(start, end):
+    station_ids = [10582, 10091, 10131, 10488, 10554]
+    df_weather_all = pd.DataFrame()
+    for station_id in station_ids:
+        df_weather = Hourly(station_id, start, end).fetch()
+        df_weather.index = df_weather.index.tz_localize('UTC')
+        df_weather = df_weather.reset_index()
 
-    df_weather = df_weather.rename(columns={
-        'time': 'Datetime',
-        'temp': 'Temperature',
-        'dwpt': 'Dew Point',
-        'rhum': 'Relative Humidity',
-        'prcp': 'Precipitation',
-        'snow': 'Snow Depth',
-        'wdir': 'Wind Direction',
-        'wspd': 'Average Wind Speed',
-        'wpgt': 'Peak Wind Speed',
-        'pres': 'Average Sea-Level Air Pressure',
-        'tsun': 'Sunshine Duration',
-        'coco': 'Weather Condition Code'
-    })
+        df_weather = df_weather.rename(columns={'time': 'Datetime'})
+        df_weather = df_weather.rename(columns={
+            'temp': f'{station_id} Temperature',
+            'dwpt': f'{station_id} Dew Point',
+            'rhum': f'{station_id} Relative Humidity',
+            'prcp': f'{station_id} Precipitation',
+            'snow': f'{station_id} Snow Depth',
+            'wdir': f'{station_id} Wind Direction',
+            'wspd': f'{station_id} Average Wind Speed',
+            'wpgt': f'{station_id} Peak Wind Speed',
+            'pres': f'{station_id} Average Sea-Level Air Pressure',
+            'tsun': f'{station_id} Sunshine Duration',
+            'coco': f'{station_id} Weather Condition Code'
+        })
 
-    return df_weather
+        if df_weather_all.empty:
+            df_weather_all = df_weather
+        else:
+            df_weather_all = pd.merge(df_weather_all, df_weather, on=['Datetime'], how='left')
+    return df_weather_all
 
 # fetch power consumption data
 consumption = {
@@ -185,7 +181,7 @@ consumption = {
     4359: "Residual Load",
     4387: "Pumped Storage Load"
 }
-df = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2015, 2, 1), filters=consumption, region="50Hertz", resolution="hour")
+df = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=consumption, region="50Hertz", resolution="hour")
 
 # fetch power generation data
 generation = {
@@ -201,7 +197,7 @@ generation = {
     4070: "Pumped Storage",
     1228: "Other Renewable",
 }
-df_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2015, 2, 1), filters=generation, region="50Hertz", resolution="hour")
+df_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=generation, region="50Hertz", resolution="hour")
 
 # fetch forcasted generation data
 forcasted_generation = {
@@ -210,37 +206,43 @@ forcasted_generation = {
     125: "Forecast Solar",
     715: "Forecast Other"
 }
-df_forcasted_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2015, 2, 1), filters=forcasted_generation, region="50Hertz", resolution="hour")
+df_forcasted_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=forcasted_generation, region="50Hertz", resolution="hour")
 
-# # fetch market data
-# df_market = load_dataset(path='data/day_ahead_prices.csv')
+# fetch market data
+df_market = fetch_market_data("2015-01-01", "2018-09-30", "DE-AT-LU")
+df_market_2 = fetch_market_data("2018-10-01", "2025-01-01", "DE-LU")
+df_market = pd.concat([df_market, df_market_2], ignore_index=True)
 
 # fetch holiday data
 years = df['Datetime'].dt.strftime("%Y").unique()
-df_holidays = fetch_holiday_data(years=years, region='de-be')
+df_holidays = fetch_holiday_data(years=years)
+df['Date'] = df['Datetime'].dt.date
+df_holidays['Date'] = df_holidays['Datetime'].dt.date
+df = df.merge(df_holidays[['Date', 'Holiday Count']], on='Date', how='left').drop(columns=['Date'])
+df['Holiday Count'] = df['Holiday Count'].fillna(0)
 
-# scrap school holidays data
-df_school_holidays = scrap_school_holidays_data()
+# scrape school holidays data
+df_school_holidays = scrape_school_holidays_data()
+df['Date'] = df['Datetime'].dt.date
+df_school_holidays['Date'] = df_school_holidays['Datetime'].dt.date
+df = df.merge(df_school_holidays[['Date', 'school_holiday']], on='Date', how='left').drop(columns=['Date'])
+df['school_holiday'] = df['school_holiday'].fillna(0)
 
 # fetch weather data
 start = df['Datetime'].min().tz_localize(None)
 end = df['Datetime'].max().tz_localize(None) + timedelta(hours=1)
-df_weather = fetch_weather_data(start=start, end=end, station_id='10582')
-df_weather.to_csv('data/weather.csv', index=False)
+df_weather = fetch_weather_data(start=start, end=end)
 
 # time-based features
-df['Holiday'] = df['Datetime'].dt.date.isin(df_holidays['Holiday'].dt.date)
-mapping = df_school_holidays.set_index('date')['holiday']
-df['SchoolHoliday'] = df['Datetime'].dt.date.map(mapping).fillna(0)
 df['Hour'] = df['Datetime'].dt.hour
 df['DayOfWeek'] = df['Datetime'].dt.dayofweek
 df['Month'] = df['Datetime'].dt.month
 df['IsWeekend'] = df['DayOfWeek'].isin([5,6]).astype(int)
 
 # merge dataframes
-df = pd.merge(df, df_weather, on=['Datetime'], how='left')
 df = pd.merge(df, df_generation, on=['Datetime'], how='left')
-# df = pd.merge(df, df_market, on=['Datetime'], how='left')
+df = pd.merge(df, df_market, on=['Datetime'], how='left')
+df = pd.merge(df, df_weather, on=['Datetime'], how='left')
 df.to_csv('data/dataset.csv', sep=';', index=False)
 print(df.head())
 print(df.tail())
