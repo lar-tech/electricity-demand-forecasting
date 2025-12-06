@@ -70,8 +70,7 @@ def fetch_holiday_data(years: list[int], region: str = 'de-be') -> pd.DataFrame:
     df_holidays = pd.DataFrame(data={"Holiday": holiday_dates})
     return df_holidays
 
-def scrap_school_holidays_data(year_start=2015, year_end=2025, path="data/holidays_school.csv"):
-
+def scrap_school_holidays_data(year_start=2015, year_end=2025):
     def convert(d_str, year):
         d_str = d_str.strip(".")
         day, month = map(int, d_str.split("."))
@@ -156,8 +155,6 @@ def scrap_school_holidays_data(year_start=2015, year_end=2025, path="data/holida
     for date, holiday_code in bridge_holidays:
         df_schoolholidays.loc[(df_schoolholidays['date'] == date), 'holiday'] = holiday_code
 
-    df_schoolholidays.to_csv(path, index=False)
-
     return df_schoolholidays
 
 def fetch_weather_data(start: pd.Timestamp, end: pd.Timestamp, station_id: str) -> pd.DataFrame:
@@ -223,7 +220,7 @@ years = df['Datetime'].dt.strftime("%Y").unique()
 df_holidays = fetch_holiday_data(years=years, region='de-be')
 
 # scrap school holidays data
-df_school_holidays = scrap_school_holidays_data(path="data/holidays_school.csv")
+df_school_holidays = scrap_school_holidays_data()
 
 # fetch weather data
 start = df['Datetime'].min().tz_localize(None)
