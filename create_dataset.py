@@ -30,13 +30,13 @@ def fetch_smard_data(start_date: datetime, end_date: datetime, filters: dict, re
         response = requests.get(url, timeout=60)
         response.raise_for_status()
         return response.json()["timestamps"]
-    
+
     def get_series(filter_id: int, timestamp: int) -> list:
         url = f"{base_url}/{filter_id}/{region}/{filter_id}_{region}_{resolution}_{timestamp}.json"
         response = requests.get(url, timeout=60)
         response.raise_for_status()
         return response.json()["series"]
-    
+
     all_data = {}
     for filter_id, column_name in tqdm(filters.items(), desc="Downloading"):
         timestamps = get_timestamps(filter_id)
@@ -51,11 +51,11 @@ def fetch_smard_data(start_date: datetime, end_date: datetime, filters: dict, re
         all_data[column_name] = series_data
 
     df = pd.DataFrame(all_data)
-    df.index = pd.to_datetime(df.index, unit='ms')
-    df.index.name = 'datetime'
-    df = df.sort_index()
-    df.reset_index(inplace=True)
-    df.rename(columns={"datetime": "Datetime"}, inplace=True)
+    df.index = pd.to_datetime(df.index, unit='ms', utc=True).tz_convert('Europe/Berlin')
+    df = (df.sort_index()
+            .resample('1h', closed="left", label="right")
+            .interpolate(method='linear')
+            .reset_index(names='Datetime'))
     
     return df
 
@@ -186,14 +186,9 @@ def fetch_weather_data(start: pd.Timestamp, end: pd.Timestamp, station_id: str) 
 consumption = {
     410: "Grid Load",
     4359: "Residual Load",
-    4387: "Pumped Storage Consumption"
+    4387: "Pumped Storage Load"
 }
-df = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2015, 6, 1), filters=consumption, region="50Hertz", resolution="hour")
-df = (df.set_index('Datetime')
-        .sort_index()
-        .resample('1h', closed="left", label="right")
-        .interpolate(method='linear')
-        .reset_index())
+df = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2015, 2, 1), filters=consumption, region="50Hertz", resolution="hour")
 
 # fetch power generation data
 generation = {
@@ -209,7 +204,7 @@ generation = {
     4070: "Pumped Storage",
     1228: "Other Renewable",
 }
-df_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=generation, region="50Hertz", resolution="hour")
+df_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2015, 2, 1), filters=generation, region="50Hertz", resolution="hour")
 
 # fetch forcasted generation data
 forcasted_generation = {
@@ -218,9 +213,9 @@ forcasted_generation = {
     125: "Forecast Solar",
     715: "Forecast Other"
 }
-df_forcasted_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=forcasted_generation, region="50Hertz", resolution="hour")
+df_forcasted_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2015, 2, 1), filters=forcasted_generation, region="50Hertz", resolution="hour")
 
-# # load market data
+# # fetch market data
 # df_market = load_dataset(path='data/day_ahead_prices.csv')
 
 # fetch holiday data
