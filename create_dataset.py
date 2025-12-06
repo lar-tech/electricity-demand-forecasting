@@ -145,7 +145,7 @@ def scrape_school_holidays_data(year_start=2015, year_end=2025):
     return df_schoolholidays
 
 def fetch_weather_data(start, end):
-    station_ids = [10582, 10091, 10131, 10488, 10554]
+    station_ids = [10384, 10091, 10131, 10488, 10554]
     df_weather_all = pd.DataFrame()
     for station_id in station_ids:
         df_weather = Hourly(station_id, start, end).fetch()
