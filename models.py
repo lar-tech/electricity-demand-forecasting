@@ -7,6 +7,7 @@ from sklearn.linear_model import Ridge
 from lightgbm import LGBMRegressor
 from xgboost import XGBRegressor
 
+
 def plot_predictions(df_load, predictions, model_name, mae):
     val_week = df_load.loc[predictions.index.min():predictions.index.max()]
     fig, ax = plt.subplots(figsize=(10,6))
@@ -20,25 +21,26 @@ def plot_predictions(df_load, predictions, model_name, mae):
     plt.tight_layout()
     plt.show()
 
-def backtesting(model, df, cv):
+def backtesting(model, df, cv, exog=None):
     metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
     metric, predictions = backtesting_forecaster(
                                 forecaster = model,
-                                y = df.loc['2015-01-01':'2024-03-07']['Grid Load'].asfreq('h'),
+                                y = df.loc['2015-01-01':'2024-03-07']['grid_load'].asfreq('h'),
+                                exog = exog,
                                 cv = cv,
                                 metric = metrics,
                                 n_jobs=-1
-                            )
+                                )
     return metric, predictions
 
 if __name__ == "__main__":
     # load dataset
     df = pd.read_csv('data/dataset.csv', delimiter=';')
-    df['Datetime'] = pd.to_datetime(df['Datetime'], utc=True)
-    df = df.set_index('Datetime').sort_index()
+    df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
+    df = df.set_index('datetime').sort_index()
 
     # create train and validation sets
-    df = df[['Grid Load']]
+    df = df[['grid_load']]
     data_train = df.loc['2015-01-01':'2024-03-02'].asfreq('h')
     data_val = df.loc['2024-03-01':'2024-03-07'].asfreq('h')
 
@@ -100,7 +102,7 @@ if __name__ == "__main__":
         metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
         metric, predictions = backtesting_forecaster(
                                 forecaster = forecaster,
-                                y = df.loc['2015-01-01':'2024-03-07']['Grid Load'].asfreq('h'),
+                                y = df.loc['2015-01-01':'2024-03-07']['grid_load'].asfreq('h'),
                                 cv = cv,
                                 metric = metrics
                             )

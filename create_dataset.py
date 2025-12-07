@@ -50,8 +50,8 @@ def fetch_market_data(start: str, end: str, country: str) -> pd.DataFrame:
     data = response.json()
     df = pd.DataFrame(data)
     df['datetime'] = pd.to_datetime(df['unix_seconds'], unit='s', utc=True).dt.tz_convert('Europe/Berlin')
-    df.rename(columns={'price': 'Day-ahead Price'}, inplace=True)
-    df = df[['datetime', 'Day-ahead Price']]
+    df.rename(columns={'price': 'day_ahead_price'}, inplace=True)
+    df = df[['datetime', 'day_ahead_price']]
 
     df = (df.set_index('datetime')
           .resample('1h', closed="left", label="right")

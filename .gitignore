@@ -6,4 +6,4 @@ plots/
 catboost_info/
 *.pyc
 *.ipynb
-*.csv
+results/
