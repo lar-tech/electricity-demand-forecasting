@@ -11,7 +11,7 @@ PLOT = False
 
 def plot_consumption(df):
     plt.figure(figsize=(10,6))
-    plt.plot(df['Datetime'], df['Grid Load'], color='tab:blue')
+    plt.plot(df['datetime'], df['grid_load'], color='tab:blue')
     if EXPORT:
         plt.title("Power Consumption Over Time")
     plt.xlabel("Time")
@@ -24,10 +24,10 @@ def plot_consumption(df):
         plt.show()
 
 def plot_load_distribution_by_year(df):
-    df = df[df['Datetime'].dt.year != 2014].copy().copy()
-    df['Year'] = df['Datetime'].dt.year
+    df = df[df['datetime'].dt.year != 2014].copy().copy()
+    df['Year'] = df['datetime'].dt.year
     plt.figure(figsize=(10, 6))
-    sns.violinplot(data=df, x='Year', y='Grid Load')
+    sns.violinplot(data=df, x='Year', y='grid_load')
     plt.title("Distribution of Consumption by Year")
     plt.xlabel("")
     plt.ylabel("Grid Load [MWh]")
@@ -39,9 +39,9 @@ def plot_load_distribution_by_year(df):
         plt.show()
 
 def plot_average_annual_course(df):
-    df = df[df['Datetime'].dt.year != 2014].copy()
-    df['DayOfYear'] = df['Datetime'].dt.dayofyear
-    yearly_mean = df.groupby('DayOfYear')['Grid Load'].mean()
+    df = df[df['datetime'].dt.year != 2014].copy()
+    df['DayOfYear'] = df['datetime'].dt.dayofyear
+    yearly_mean = df.groupby('DayOfYear')['grid_load'].mean()
 
     month_days = [pd.Timestamp(2021, m, 1).day_of_year for m in range(1, 13)]
     month_days.append(366)
@@ -64,8 +64,8 @@ def plot_average_annual_course(df):
         plt.show()
 
 def plot_average_load_by_day_and_season(df):
-    df = df[df['Datetime'].dt.year != 2014].copy()
-    month = df['Datetime'].dt.month
+    df = df[df['datetime'].dt.year != 2014].copy()
+    month = df['datetime'].dt.month
     season_map = {
         12: 'Winter', 1: 'Winter', 2: 'Winter',
         3: 'Spring', 4: 'Spring', 5: 'Spring',
@@ -75,7 +75,7 @@ def plot_average_load_by_day_and_season(df):
     df['Season'] = month.map(season_map)
     order = ['Winter', 'Spring', 'Summer', 'Autumn']
 
-    grp = df.groupby(['Season','DayOfWeek'])['Grid Load'].agg(['mean', 'std']).reset_index()
+    grp = df.groupby(['Season','DayOfWeek'])['grid_load'].agg(['mean', 'std']).reset_index()
 
     fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharey=True, sharex=True)
 
@@ -102,9 +102,9 @@ def plot_average_load_by_day_and_season(df):
         plt.show()
 
 def plot_average_load_by_hour_and_season(df):
-    df = df[df['Datetime'].dt.year != 2014].copy()
-    df['Hour'] = df['Datetime'].dt.hour
-    month = df['Datetime'].dt.month
+    df = df[df['datetime'].dt.year != 2014].copy()
+    df['Hour'] = df['datetime'].dt.hour
+    month = df['datetime'].dt.month
     season_map = {
         12: 'Winter', 1: 'Winter', 2: 'Winter',
         3: 'Spring', 4: 'Spring', 5: 'Spring',
@@ -114,7 +114,7 @@ def plot_average_load_by_hour_and_season(df):
     df['Season'] = month.map(season_map)
     order = ['Winter', 'Spring', 'Summer', 'Autumn']
 
-    grp = df.groupby(['Season','Hour'])['Grid Load'].agg(['mean', 'std']).reset_index()
+    grp = df.groupby(['Season','Hour'])['grid_load'].agg(['mean', 'std']).reset_index()
 
     fig, axes = plt.subplots(2, 2, figsize=(10, 6), sharey=True, sharex=True)
     for ax, season in zip(axes.flat, order):
@@ -140,7 +140,7 @@ def plot_average_load_by_hour_and_season(df):
 
 def plot_power_generation_by_source(df):
     plt.figure(figsize=(10,6))
-    plt.stackplot(df['Datetime'],
+    plt.stackplot(df['datetime'],
                 df['Lignite'],
                 df['Wind Onshore'],
                 df['Biomass'],
@@ -174,8 +174,8 @@ def plot_power_generation_by_source(df):
 
 def plot_grid_and_residual_load_over_time(df):
     plt.figure(figsize=(10,6))
-    plt.plot(df['Datetime'], df['Grid Load'], color='tab:blue', label='Grid Load')
-    plt.plot(df['Datetime'], df['Residual Load'], color='tab:orange', alpha=0.7, label='Residual Load')
+    plt.plot(df['datetime'], df['grid_load'], color='tab:blue', label='grid_load')
+    plt.plot(df['datetime'], df['Residual Load'], color='tab:orange', alpha=0.7, label='Residual Load')
     plt.title("Grid and Residual Load Over Time")
     plt.xlabel("Time")
     plt.ylabel("Power [MW]")
@@ -190,12 +190,12 @@ def plot_grid_and_residual_load_over_time(df):
 def plot_load_and_temperature_over_time(df):
     fig, ax1 = plt.subplots(figsize=(10, 6))
     
-    ax1.plot(df['Datetime'], df['Grid Load'], label='Grid Load', color='tab:blue')
+    ax1.plot(df['datetime'], df['grid_load'], label='grid_load', color='tab:blue')
     ax1.set_ylabel("Grid Load [MWh]", color='tab:blue')
     ax1.tick_params(axis='y', labelcolor='tab:blue')
     
     ax2 = ax1.twinx()
-    ax2.plot(df['Datetime'], df['10384 Temperature'], color='tab:orange', alpha=0.7, label='Temperature')
+    ax2.plot(df['datetime'], df['10384_temperature'], color='tab:orange', alpha=0.7, label='Temperature')
     ax2.set_ylabel("Temperature [°C]", color='tab:orange')
     ax2.tick_params(axis='y', labelcolor='tab:orange')
     
@@ -211,8 +211,8 @@ def plot_load_and_temperature_over_time(df):
 def plot_correlation_heatmap(df):
     # plt.rcParams['font.size'] = 12
     plt.figure()
-    num_cols = ['Grid Load', 'Residual Load', 'Solar', 'Wind Onshore', 'Wind Offshore',
-                '10384 Temperature', '10384 Average Wind Speed', '10384 Sunshine Duration']
+    num_cols = ['grid_load', 'residual_load', 'solar', 'wind_onshore', 'wind_offshore',
+                '10384_temperature', '10384_average_wind_speed', '10384_sunshine_duration']
 
     corr = df[num_cols].corr()
     sns.heatmap(corr, cmap='coolwarm', annot=True, fmt=".2f", center=0, square=True, annot_kws={"size": 8})
@@ -225,7 +225,7 @@ def plot_correlation_heatmap(df):
 
 def plot_autocorrelation(df):
     fig, ax = plt.subplots(figsize=(10, 6))
-    plot_acf(df['Grid Load'], ax=ax, title="", lags=60)
+    plot_acf(df['grid_load'], ax=ax, title="", lags=60)
     plt.grid()
     # plt.title("Autocorrelation of Grid Load")
     plt.tight_layout()
@@ -235,7 +235,7 @@ def plot_autocorrelation(df):
         plt.show()
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    plot_pacf(df['Grid Load'], ax=ax, lags=60, title="")
+    plot_pacf(df['grid_load'], ax=ax, lags=60, title="")
     # plt.title("Partial Autocorrelation of Grid Load")
     plt.grid()
     plt.tight_layout()
@@ -246,7 +246,7 @@ def plot_autocorrelation(df):
 
 # load dataset
 df = pd.read_csv('data/dataset.csv', delimiter=';')
-df['Datetime'] = pd.to_datetime(df['Datetime'], utc=True)
+df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
 
 # plotting
 # plot_consumption(df)
