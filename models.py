@@ -45,7 +45,7 @@ if __name__ == "__main__":
     # define cross-validation
     cv = TimeSeriesFold(steps = 24,
                         initial_train_size = len(data_train),
-                        refit = True)
+                        refit = False)
 
     # baseline model
     model_baseline = ForecasterEquivalentDate(offset=pd.DateOffset(days=1), n_offsets=1)
@@ -56,22 +56,39 @@ if __name__ == "__main__":
     window_features = RollingFeatures(stats = ['mean', 'std', 'min', 'max'],
                                         window_sizes = [24*3, 24*7, 24*7, 24*7])
     configs = [
-        ("Ridge_24lags", Ridge(alpha=1.0), 24, None),
-        ("Ridge_72lags", Ridge(alpha=1.0), 24*3, None),
-        ("Ridge_168lags", Ridge(alpha=1.0), 168, None),
-        ("Ridge_336lags", Ridge(alpha=1.0), 168*2, None),
-        ("Ridge_168lags_window", Ridge(alpha=1.0), 168, window_features),
+        # ("Ridge_24lags", Ridge(alpha=1.0), 24, None),
+        # ("Ridge_72lags", Ridge(alpha=1.0), 24*3, None),
+        # ("Ridge_168lags", Ridge(alpha=1.0), 168, None),
+        # ("Ridge_336lags", Ridge(alpha=1.0), 168*2, None),
+        # ("Ridge_168lags_window", Ridge(alpha=1.0), 168, window_features),
         
-        ("LGBM_24lags", LGBMRegressor(random_state=123, verbose=-1), 24, None),
-        ("LGBM_72lags", LGBMRegressor(random_state=123, verbose=-1), 24*3, None),
-        ("LGBM_168lags", LGBMRegressor(random_state=123, verbose=-1), 168, None),
-        ("LGBM_336lags", LGBMRegressor(random_state=123, verbose=-1), 168*2, None),
-        ("LGBM_168lags_window", LGBMRegressor(random_state=123, verbose=-1), 168, window_features),
-        
-        ("XGB_72lags", XGBRegressor(random_state=123, verbosity=0), 24*3, None),
-        ("XGB_168lags", XGBRegressor(random_state=123, verbosity=0), 168, None),
-        ("XGB_336lags", XGBRegressor(random_state=123, verbosity=0), 168*2, None),
-        ("XGB_168lags_window", XGBRegressor(random_state=123, verbosity=0), 168, window_features),
+        # ("LGBM_24lags", LGBMRegressor(random_state=123, verbose=-1), 24, None),
+        # ("LGBM_72lags", LGBMRegressor(random_state=123, verbose=-1), 24*3, None),
+        # ("LGBM_168lags", LGBMRegressor(random_state=123, verbose=-1), 168, None),
+        # ("LGBM_336lags", LGBMRegressor(random_state=123, verbose=-1), 168*2, None),
+        # ("LGBM_test", LGBMRegressor(random_state=123,
+        #                             n_estimators=350,
+        #                             max_depth=9,
+        #                             learning_rate=0.1,
+        #                             # reg_alpha=0.7636828414433382,
+        #                             # reg_lambda=0.243666374536874,
+        #                             verbose=-1),
+        #                             168, window_features)
+
+        # ("XGB_72lags", XGBRegressor(random_state=123, verbosity=0), 24*3, None),
+        # ("XGB_168lags", XGBRegressor(random_state=123, verbosity=0), 168, None),
+        # ("XGB_336lags", XGBRegressor(random_state=123, verbosity=0), 168*2, None),
+        # ("XGB_168lags_window", XGBRegressor(random_state=123, verbosity=0), 168, window_features),
+        # ("XGB_test", XGBRegressor(random_state=123,
+        #                           n_estimators=600,
+        #                           max_depth=8,
+        #                           learning_rate=0.05,
+        #                           gamma=5,
+        #                           min_child_weight=3,
+        #                           colsample_bytree=0.7,
+        #                           subsample=0.7,
+        #                           verbosity=0),
+        #                           168, window_features),       
         ]
     
     results = []
@@ -95,4 +112,4 @@ if __name__ == "__main__":
                         'MAPE': metric['mean_absolute_percentage_error'].values[0]})
 
     results_df = pd.DataFrame(results).sort_values('MAE')
-    results_df.to_csv("data/model_comparison.csv", sep=";", index=False)
+    # results_df.to_csv("data/model_comparison.csv", sep=";", index=False)
