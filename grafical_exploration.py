@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from statsmodels.graphics.tsaplots import plot_acf
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import calendar
 
-# plt.rcParams['font.family'] = 'Fira Sans'
-# plt.rcParams['font.size'] = 20
+plt.rcParams['font.family'] = 'Fira Sans'
+plt.rcParams['font.size'] = 20
 EXPORT = True 
 PLOT = False
 
@@ -224,13 +224,23 @@ def plot_correlation_heatmap(df):
         plt.show()
 
 def plot_autocorrelation(df):
-    fig, ax = plt.subplots(figsize=(5, 2))
-    plot_acf(df['Grid Load'], ax=ax)
+    fig, ax = plt.subplots(figsize=(10, 6))
+    plot_acf(df['Grid Load'], ax=ax, title="", lags=60)
     plt.grid()
-    plt.title("Autocorrelation of Grid Load")
+    # plt.title("Autocorrelation of Grid Load")
     plt.tight_layout()
     if EXPORT:
-        plt.savefig('data/plots/autocorrelation_grid_load.svg', bbox_inches='tight')
+        plt.savefig('data/plots/autocorrelation.pdf', bbox_inches='tight', transparent=True)
+    if PLOT:
+        plt.show()
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    plot_pacf(df['Grid Load'], ax=ax, lags=60, title="")
+    # plt.title("Partial Autocorrelation of Grid Load")
+    plt.grid()
+    plt.tight_layout()
+    if EXPORT:
+        plt.savefig('data/plots/partial_autocorrelation.pdf', bbox_inches='tight', transparent=True)
     if PLOT:
         plt.show()
 
@@ -239,13 +249,13 @@ df = pd.read_csv('data/dataset.csv', delimiter=';')
 df['Datetime'] = pd.to_datetime(df['Datetime'], utc=True)
 
 # plotting
-plot_consumption(df)
-plot_load_distribution_by_year(df)
-plot_average_annual_course(df)
-plot_average_load_by_day_and_season(df)
-plot_average_load_by_hour_and_season(df)
-plot_power_generation_by_source(df)
-plot_grid_and_residual_load_over_time(df)
-plot_load_and_temperature_over_time(df)
-plot_correlation_heatmap(df)
+# plot_consumption(df)
+# plot_load_distribution_by_year(df)
+# plot_average_annual_course(df)
+# plot_average_load_by_day_and_season(df)
+# plot_average_load_by_hour_and_season(df)
+# plot_power_generation_by_source(df)
+# plot_grid_and_residual_load_over_time(df)
+# plot_load_and_temperature_over_time(df)
+# plot_correlation_heatmap(df)
 plot_autocorrelation(df)

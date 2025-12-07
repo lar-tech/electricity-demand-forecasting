@@ -23,18 +23,3 @@
     - Feature importance
 
 6. Iterate through 3-5 until satified with the results
-
-
-### To-Do
-- Wetterdaten aus der 50Hertz Regio fetchen
-    - Mittelwert bilden aus alle Wetterstationen?
-
-Ferien:
-Winterferien: 1
-Osterferien: 2
-Pfingstferien: 3
-Sommerferien: 4
-Herbstferien: 5
-Weihnachtsferien: 6
-
-It is very important to use the closed='left' and label='right' arguments correctly to avoid introducing future information into the training, leakage). Suppose that values are available for 10:10, 10:30, 10:45, 11:00, 11:12, and 11:30. To obtain the hourly average, the value assigned to 11:00 must be calculated using the values for 10:10, 10:30, and 10:45; and the value assigned to 12:00 must be calculated using the value for 11:00, 11:12 and 11:30.
