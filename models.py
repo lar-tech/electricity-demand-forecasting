@@ -58,7 +58,7 @@ if __name__ == "__main__":
     window_features = RollingFeatures(stats = ['mean', 'std', 'min', 'max'],
                                         window_sizes = [24*3, 24*7, 24*7, 24*7])
     configs = [
-        # ("Ridge_24lags", Ridge(alpha=1.0), 24, None),
+        ("Ridge_24lags", Ridge(alpha=1.0), 24, None),
         # ("Ridge_72lags", Ridge(alpha=1.0), 24*3, None),
         # ("Ridge_168lags", Ridge(alpha=1.0), 168, None),
         # ("Ridge_336lags", Ridge(alpha=1.0), 168*2, None),
