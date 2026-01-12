@@ -175,27 +175,9 @@ def fetch_weather_data(start, end):
 
 # fetch power consumption data
 consumption = {
-    410: "grid_load",
-    4359: "residual_load",
-    4387: "pumped_storage_load"
+    410: "grid_load"
 }
 df = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=consumption, region="50Hertz", resolution="hour")
-
-# fetch power generation data
-generation = {
-    1223: "lignite",
-    4071: "natural_gas",
-    4069: "hard_coal",
-    1227: "other_conventional",
-    1225: "wind_offshore",
-    4067: "wind_onshore",
-    4068: "solar",
-    1226: "hydro",
-    4066: "biomass",
-    4070: "pumped_storage",
-    1228: "other_renewable",
-}
-df_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=generation, region="50Hertz", resolution="hour")
 
 # fetch forcasted generation data
 forcasted_generation = {
@@ -238,7 +220,6 @@ df['week'] = df['datetime'].dt.isocalendar().week
 df['month'] = df['datetime'].dt.month
 
 # merge dataframes
-df = pd.merge(df, df_generation, on=['datetime'], how='left')
 df = pd.merge(df, df_market, on=['datetime'], how='left')
 df = pd.merge(df, df_weather, on=['datetime'], how='left')
 df = df.astype({col: 'float64' for col in df.select_dtypes(include=['Float64', 'UInt32']).columns})

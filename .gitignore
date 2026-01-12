@@ -1,9 +1,28 @@
-.DS_Store
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Packaging
+*.egg-info/
+dist/
+build/
+
+# environment
+.venv/
+venv*/
 .python-version
 .vscode/
-test.ipynb
-plots/
-catboost_info/
-*.pyc
+.DS_Store
+
+# tests
+test/
+*_test.py
 *.ipynb
+
+# data
+models/
+images/
+*.log
+plots/
 results/
