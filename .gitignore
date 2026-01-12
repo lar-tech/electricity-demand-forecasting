@@ -25,8 +25,4 @@ models/
 plots/
 results/
 *.log
-<<<<<<< HEAD
-plots/
-results/
-=======
->>>>>>> 25bbbc3 (added dataset)
+tests/
