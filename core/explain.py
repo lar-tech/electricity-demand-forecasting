@@ -43,14 +43,14 @@ def sequential_feature_importance(importances_sorted, estimator, data, cv, metri
     return results
 
 # load dataset
-df = pd.read_csv('../data/dataset.csv', delimiter=';')
+df = pd.read_csv('data/dataset.csv', delimiter=';')
 df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
 df = df.set_index('datetime').sort_index()
 
 # create train and validation sets
 data = df.copy()
 data_train = data.loc['2015-01-01':'2024-03-02'].asfreq('h')
-data_val = data.loc['2024-03-03':'2024-03-07'].asfreq('h')
+data_val = data.loc['2024-03-03':'2024-03-09'].asfreq('h')
 
 # define cross-validation
 cv = TimeSeriesFold(steps=24, initial_train_size=len(data_train), refit=False)
@@ -78,8 +78,8 @@ imp_gain_sorted = imp_gain.sort_values('importance', ascending=False)['feature']
 imp_split_sorted = imp_split.sort_values('importance', ascending=False)['feature'].tolist()
 
 # Sequentially add features
-results_gain = sequential_feature_importance(imp_gain_sorted, estimator, data_train, cv, metrics)
-results_split = sequential_feature_importance(imp_split_sorted, estimator, data_train, cv, metrics)
+results_gain = sequential_feature_importance(imp_gain_sorted, estimator, data, cv, metrics)
+results_split = sequential_feature_importance(imp_split_sorted, estimator, data, cv, metrics)
 
 # plot
 fig, ax = plt.subplots(1, 2, figsize=(16, 5))
