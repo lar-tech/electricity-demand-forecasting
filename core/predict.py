@@ -41,21 +41,18 @@ if __name__ == "__main__":
     data_val = data.loc['2024-03-01':'2024-03-07'].asfreq('h')
 
     # define cross-validation
-    cv = TimeSeriesFold(steps = 24,
-                        initial_train_size = len(data_train),
-                        refit = False)
+    cv = TimeSeriesFold(steps=24, initial_train_size=len(data_train), refit=False)
+    
     # # baseline model
     # model_baseline = ForecasterEquivalentDate(offset=pd.DateOffset(days=1), n_offsets=1)
     # metric, predictions = backtesting(model_baseline, data, cv)
     # plot_predictions(data, predictions, "Seasonal Naive Forecast", metric["mean_absolute_percentage_error"].values[0])
 
     # autoregressive model with LightGBM
-    estimator = LGBMRegressor(random_state=123, verbose=-1)
-    window_features = RollingFeatures(stats = ['mean', 'std', 'min', 'max'], window_sizes = [24*3, 24*7, 24*7, 24*7])
-    lags = 168*2
+    estimator = LGBMRegressor(random_state=123, verbose=-1, n_estimators=800, max_depth=6, learning_rate=0.20213758391513376, reg_alpha=0.3431780161508694, reg_lambda=0.7290497073840416)
+    window_features = RollingFeatures(stats=['mean', 'std', 'min', 'max'], window_sizes=[24*3, 24*7, 24*7, 24*7])
+    lags = 24
     forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
     metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
     metric, predictions = backtesting(forecaster, data, cv, exog=True)
     plot_predictions(df, predictions, "Recursive LGBM Model", metric["mean_absolute_percentage_error"].values[0])
-
-# %%
