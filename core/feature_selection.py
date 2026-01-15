@@ -10,7 +10,6 @@ from lightgbm import LGBMRegressor
 import warnings
 warnings.filterwarnings("ignore", message="X does not have valid feature names.*")
 
-
 if __name__ == "__main__":
     # load dataset
     df = pd.read_csv('data/dataset.csv', delimiter=';')
