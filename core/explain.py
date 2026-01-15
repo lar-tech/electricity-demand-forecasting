@@ -35,8 +35,6 @@ def sequential_feature_importance(importances_sorted, estimator, data, cv, metri
                                     metric=metrics,
                                     verbose=False)
         results.append(metric["mean_absolute_percentage_error"].iloc[0])
-        if i == 30:
-            break
         if i % 5 == 0:
             print(f"Processed {i} features")
 
@@ -80,6 +78,14 @@ imp_split_sorted = imp_split.sort_values('importance', ascending=False)['feature
 # Sequentially add features
 results_gain = sequential_feature_importance(imp_gain_sorted, estimator, data, cv, metrics)
 results_split = sequential_feature_importance(imp_split_sorted, estimator, data, cv, metrics)
+
+# save
+imp_gain.to_csv('data/results/feature_importance_gain.csv', index=False)
+imp_split.to_csv('data/results/feature_importance_split.csv', index=False)
+results_gain_df = pd.DataFrame({"num_features": range(1, len(results_gain)+1), "mape": results_gain})
+results_split_df = pd.DataFrame({"num_features": range(1, len(results_split)+1), "mape": results_split})
+results_gain_df.to_csv('data/results/sequential_feature_importance_gain.csv', index=False)
+results_split_df.to_csv('data/results/sequential_feature_importance_split.csv', index=False)
 
 # plot
 fig, ax = plt.subplots(1, 2, figsize=(16, 5))
