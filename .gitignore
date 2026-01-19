@@ -17,8 +17,7 @@ venv*/
 
 # tests
 test/
-*_test.py
-*.ipynb
+test.*
 
 # data
 *.log
