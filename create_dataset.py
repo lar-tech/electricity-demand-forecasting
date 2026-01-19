@@ -1,5 +1,5 @@
-from datetime import timedelta, datetime
 import re
+from datetime import timedelta, datetime
 from meteostat import Hourly
 import pandas as pd 
 import requests
@@ -80,7 +80,7 @@ def fetch_holiday_data(years: list[int]) -> pd.DataFrame:
     })
     return df_holidays
 
-def scrape_school_holidays_data(year_start=2015, year_end=2025):
+def scrape_school_holidays_data(year_start=2015, year_end=2025) -> pd.DataFrame:
     def convert(d_str, year):
         d_str = d_str.strip(".")
         day, month = map(int, d_str.split("."))
@@ -144,7 +144,7 @@ def scrape_school_holidays_data(year_start=2015, year_end=2025):
         
     return df_schoolholidays
 
-def fetch_weather_data(start, end):
+def fetch_weather_data(start: datetime, end: datetime) -> pd.DataFrame:
     station_ids = [10384, 10091, 10131, 10488, 10554]
     df_weather_all = pd.DataFrame()
     for station_id in station_ids:
