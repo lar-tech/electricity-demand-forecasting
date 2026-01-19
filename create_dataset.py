@@ -218,11 +218,12 @@ df['hour'] = df['datetime'].dt.hour
 df['day_of_week'] = df['datetime'].dt.dayofweek
 df['week'] = df['datetime'].dt.isocalendar().week
 df['month'] = df['datetime'].dt.month
+df['day_of_year'] = df['datetime'].dt.dayofyear
 
 # merge dataframes
 df = pd.merge(df, df_market, on=['datetime'], how='left')
 df = pd.merge(df, df_weather, on=['datetime'], how='left')
 df = df.astype({col: 'float64' for col in df.select_dtypes(include=['Float64', 'UInt32']).columns})
-df.to_csv('data/dataset.csv', sep=';', index=False)
+df.to_csv('dataset.csv', sep=';', index=False)
 print(df.head())
 print(df.tail())
