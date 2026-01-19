@@ -21,8 +21,5 @@ test/
 *.ipynb
 
 # data
-models/
-plots/
-results/
 *.log
 tests/
