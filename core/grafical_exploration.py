@@ -1,21 +1,8 @@
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import calendar
-
-# match presentation template
-color = (39/255, 54/255, 58/255)
-plt.rcParams.update({
-    "font.family": "Fira Sans",
-    "font.size": 18,
-    "text.color": color,
-    "axes.labelcolor": color,
-    "axes.edgecolor": color,
-    "xtick.color": color,
-    "ytick.color": color,
-})
 
 def plot_grid_load(df):
     plt.figure(figsize=(10,6))

@@ -1,0 +1,84 @@
+import matplotlib.pyplot as plt
+import pandas as pd
+from skforecast.model_selection import TimeSeriesFold, backtesting_forecaster
+from skforecast.preprocessing import RollingFeatures
+from skforecast.recursive import ForecasterEquivalentDate, ForecasterRecursive
+from lightgbm import LGBMRegressor
+import warnings
+from skforecast.exceptions import MissingValuesWarning
+warnings.simplefilter('ignore', category=MissingValuesWarning)
+
+def plot_predictions(df, predictions, model_name, eval_metric, metric):
+    val_week = df['grid_load'].loc[predictions.index.min():predictions.index.max()]
+    fig, ax = plt.subplots(figsize=(10,6))
+    val_week.plot(ax=ax, label='Actual Load', color='tab:blue')
+    predictions['pred'].plot(ax=ax, label='Forecast', color='tab:red')
+    plt.xlim(pd.Timestamp('2024-03-04'), pd.Timestamp('2024-03-11'))
+    plt.ylabel("Grid Load in MWh")
+    plt.xlabel("")
+    if eval_metric == 'mean_absolute_percentage_error':
+        plt.title(f"{model_name} with MAPE {metric*100:.2f}% ")
+    elif eval_metric == 'mean_squared_error':
+        plt.title(f"{model_name} with MSE {metric:.2f} (MWh)^2 ")
+    elif eval_metric == 'mean_absolute_error':
+        plt.title(f"{model_name} with MAE {metric:.2f} MWh ")
+    plt.grid()
+    plt.legend(loc = 'upper right')
+    plt.tight_layout()
+    plt.show()
+
+def backtesting(model, df, cv, test_end, exog=False):
+    metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
+    metric, predictions = backtesting_forecaster(
+                                forecaster = model,
+                                y = df.loc['2015-01-01':test_end]['grid_load'].asfreq('h'),
+                                exog = df.loc['2015-01-01':test_end].drop(columns=['grid_load']) if exog else None,
+                                cv = cv,
+                                metric = metrics)
+    return metric, predictions
+
+if __name__ == "__main__":
+    # params
+    start = '2015-01-01'
+    train_end = '2023-12-31'
+    test_end = '2024-12-31'
+    eval_metric = 'mean_absolute_percentage_error'
+    lags = 24
+    window_features = RollingFeatures(stats=['mean', 'std', 'min', 'max'], window_sizes=[24*3, 24*7, 24*7, 24*7])
+
+    # load dataset
+    df = pd.read_csv('dataset.csv', delimiter=';')
+    df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
+    df = df.set_index('datetime').sort_index()
+    data = df.copy()
+    data_train = data.loc[start:train_end].asfreq('h') # explicity annotate frequency is hourly
+    results = pd.DataFrame()
+
+    # define cross-validation scheme
+    cv = TimeSeriesFold(steps=24, initial_train_size=len(data_train), refit=False)
+
+    # seasonal naive baseline
+    model_baseline = ForecasterEquivalentDate(offset=pd.DateOffset(days=1), n_offsets=1)
+    metric, predictions = backtesting(model_baseline, data, cv, test_end)
+    plot_predictions(data, predictions, "Seasonal Naive Forecast", eval_metric, metric[eval_metric].values[0])
+    results.loc['Seasonal Naive Forecast'] = metric.iloc[0]
+
+    # recursive lgbm without exogenous features
+    estimator = LGBMRegressor(random_state=15926, verbose=-1)
+    forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
+    metric, predictions = backtesting(forecaster, data, cv, test_end, exog=False)
+    plot_predictions(data, predictions, "Recursive Model without Exogenous Features", eval_metric, metric[eval_metric].values[0])
+
+    # recursive lgbm with exogenous features
+    metric, predictions = backtesting(forecaster, data, cv, test_end, exog=True)
+    plot_predictions(data, predictions, "Recursive Model with Exogenous Features", eval_metric, metric[eval_metric].values[0])
+
+    # tuned recursive lgbm with exogenous features
+    estimator = LGBMRegressor(learning_rate=0.04802270167510142, n_estimators=2900, num_leaves=166,
+                              max_depth=6, min_child_samples=110, subsample=0.9404067086517863,
+                              subsample_freq=1, colsample_bytree=0.6772559947743917, reg_alpha=4.588474569608268e-05,
+                              reg_lambda=0.0004650965158027969,
+                              random_state=15926, verbose=-1)
+    forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
+    metric, predictions = backtesting(forecaster, data, cv, test_end, exog=True)
+    plot_predictions(data, predictions, "Tuned Recursive Model with Exogenous Features", eval_metric, metric[eval_metric].values[0])

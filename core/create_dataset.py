@@ -5,6 +5,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
+# Fetching functions
 def fetch_smard_data(start_date: datetime, end_date: datetime, filters: dict, region: str, resolution: str) -> pd.DataFrame:
     base_url = "https://www.smard.de/app/chart_data"
     start_ts = int(start_date.timestamp() * 1000)
@@ -173,57 +174,59 @@ def fetch_weather_data(start: datetime, end: datetime) -> pd.DataFrame:
             df_weather_all = pd.merge(df_weather_all, df_weather, on=['datetime'], how='left')
     return df_weather_all
 
-# fetch power consumption data
-consumption = {
-    410: "grid_load"
-}
-df = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=consumption, region="50Hertz", resolution="hour")
+# main function
+def create_dataset():
+    # fetch power consumption data
+    consumption = {
+        410: "grid_load"
+    }
+    df = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=consumption, region="50Hertz", resolution="hour")
 
-# fetch forcasted generation data
-forcasted_generation = {
-    3791: "forecast_wind_offshore",
-    123: "forecast_wind_onshore",
-    125: "forecast_solar",
-    715: "forecast_other"
-}
-df_forcasted_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=forcasted_generation, region="50Hertz", resolution="hour")
+    # fetch forcasted generation data
+    forcasted_generation = {
+        3791: "forecast_wind_offshore",
+        123: "forecast_wind_onshore",
+        125: "forecast_solar",
+        715: "forecast_other"
+    }
+    df_forcasted_generation = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=forcasted_generation, region="50Hertz", resolution="hour")
 
-# fetch market data
-df_market = fetch_market_data("2015-01-01", "2018-09-30", "DE-AT-LU")
-df_market_2 = fetch_market_data("2018-10-01", "2025-01-01", "DE-LU")
-df_market = pd.concat([df_market, df_market_2], ignore_index=True)
+    # fetch market data
+    df_market = fetch_market_data("2015-01-01", "2018-09-30", "DE-AT-LU")
+    df_market_2 = fetch_market_data("2018-10-01", "2025-01-01", "DE-LU")
+    df_market = pd.concat([df_market, df_market_2], ignore_index=True)
 
-# fetch holiday data
-years = df['datetime'].dt.strftime("%Y").unique()
-df_holidays = fetch_holiday_data(years=years)
-df['date'] = df['datetime'].dt.date
-df_holidays['date'] = df_holidays['datetime'].dt.date
-df = df.merge(df_holidays[['date', 'holiday_count']], on='date', how='left').drop(columns=['date'])
-df['holiday_count'] = df['holiday_count'].fillna(0)
+    # fetch holiday data
+    years = df['datetime'].dt.strftime("%Y").unique()
+    df_holidays = fetch_holiday_data(years=years)
+    df['date'] = df['datetime'].dt.date
+    df_holidays['date'] = df_holidays['datetime'].dt.date
+    df = df.merge(df_holidays[['date', 'holiday_count']], on='date', how='left').drop(columns=['date'])
+    df['holiday_count'] = df['holiday_count'].fillna(0)
 
-# scrape school holidays data
-df_school_holidays = scrape_school_holidays_data()
-df['date'] = df['datetime'].dt.date
-df_school_holidays['date'] = df_school_holidays['datetime'].dt.date
-df = df.merge(df_school_holidays[['date', 'school_holiday']], on='date', how='left').drop(columns=['date'])
-df['school_holiday'] = df['school_holiday'].fillna(0)
+    # scrape school holidays data
+    df_school_holidays = scrape_school_holidays_data()
+    df['date'] = df['datetime'].dt.date
+    df_school_holidays['date'] = df_school_holidays['datetime'].dt.date
+    df = df.merge(df_school_holidays[['date', 'school_holiday']], on='date', how='left').drop(columns=['date'])
+    df['school_holiday'] = df['school_holiday'].fillna(0)
 
-# fetch weather data
-start = df['datetime'].min().tz_localize(None)
-end = df['datetime'].max().tz_localize(None) + timedelta(hours=1)
-df_weather = fetch_weather_data(start=start, end=end)
+    # fetch weather data
+    start = df['datetime'].min().tz_localize(None)
+    end = df['datetime'].max().tz_localize(None) + timedelta(hours=1)
+    df_weather = fetch_weather_data(start=start, end=end)
 
-# time-based features
-df['hour'] = df['datetime'].dt.hour
-df['day_of_week'] = df['datetime'].dt.dayofweek
-df['week'] = df['datetime'].dt.isocalendar().week
-df['month'] = df['datetime'].dt.month
-df['day_of_year'] = df['datetime'].dt.dayofyear
+    # time-based features
+    df['hour'] = df['datetime'].dt.hour
+    df['day_of_week'] = df['datetime'].dt.dayofweek
+    df['week'] = df['datetime'].dt.isocalendar().week
+    df['month'] = df['datetime'].dt.month
+    df['day_of_year'] = df['datetime'].dt.dayofyear
 
-# merge dataframes
-df = pd.merge(df, df_market, on=['datetime'], how='left')
-df = pd.merge(df, df_weather, on=['datetime'], how='left')
-df = df.astype({col: 'float64' for col in df.select_dtypes(include=['Float64', 'UInt32']).columns})
-df.to_csv('dataset.csv', sep=';', index=False)
-print(df.head())
-print(df.tail())
+    # merge dataframes
+    df = pd.merge(df, df_forcasted_generation, on=['datetime'], how='left')
+    df = pd.merge(df, df_market, on=['datetime'], how='left')
+    df = pd.merge(df, df_weather, on=['datetime'], how='left')
+    df = df.astype({col: 'float64' for col in df.select_dtypes(include=['Float64', 'UInt32']).columns})
+    df.to_csv('dataset.csv', sep=';', index=False)
+    return df
