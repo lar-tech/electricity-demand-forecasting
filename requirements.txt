@@ -1,0 +1,6 @@
+matplotlib==3.10.7
+pandas==2.2.3
+skforecast==0.19.1
+lightgbm==4.6.0
+requests==2.32.5
+meteostat==2.0.1
