@@ -9,6 +9,15 @@ from skforecast.exceptions import MissingValuesWarning
 warnings.simplefilter('ignore', category=MissingValuesWarning)
 
 def plot_predictions(df, predictions, model_name, eval_metric, metric):
+    """
+    Plots the actual vs predicted values for a given model.
+    
+    :param df: dataframe containing the actual values
+    :param predictions: dataframe containing the predicted values
+    :param model_name: name of the forecasting model
+    :param eval_metric: evaluation metric used
+    :param metric: value of the evaluation metric
+    """
     val_week = df['grid_load'].loc[predictions.index.min():predictions.index.max()]
     fig, ax = plt.subplots(figsize=(10,6))
     val_week.plot(ax=ax, label='Actual Load', color='tab:blue')
@@ -28,6 +37,15 @@ def plot_predictions(df, predictions, model_name, eval_metric, metric):
     plt.show()
 
 def backtesting(model, df, cv, test_end, exog=False):
+    """
+    Backtesting function to evaluate forecasting models.
+    
+    :param model: forecaster model
+    :param df: dataframe with the time series data and exogenous variables
+    :param cv: cross-validation scheme
+    :param test_end: end date for the test set
+    :param exog: boolean indicating whether to use exogenous variables
+    """
     metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
     metric, predictions = backtesting_forecaster(
                                 forecaster = model,
