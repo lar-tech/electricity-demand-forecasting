@@ -1,9 +1,4 @@
 import os
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
 import time
 import json
 import pandas as pd
@@ -55,25 +50,28 @@ def search_space_xgb(trial):
         "lags": trial.suggest_categorical("lags", LAGS_GRID),}
 
 if __name__ == "__main__":
+    # params
     os.makedirs('results/tuning/', exist_ok=True)
     SEARCH_SPACE_BY_CLASS = {   LGBMRegressor: search_space_lgbm,
                                 XGBRegressor: search_space_xgb,}
 
-    FIXED_PARAMS_BY_CLASS = {   LGBMRegressor: {"random_state": 123, "verbose": -1, "n_jobs": 1},
-                                XGBRegressor: {"random_state": 123, "verbosity": 0, "n_jobs": 1},}
+    FIXED_PARAMS_BY_CLASS = {   LGBMRegressor: {"random_state": 15926, "verbose": -1},
+                                XGBRegressor: {"random_state": 15926, "verbosity": 0},}
+    start = '2015-01-01'
+    train_end = '2023-12-31'
+    test_end = '2024-12-31'
 
     # load dataset
     df = pd.read_csv('dataset.csv', delimiter=';')
     df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
     df = df.set_index('datetime').sort_index()
 
-    estimators = [LGBMRegressor(random_state=123, verbose=-1, n_jobs=1),
-                  XGBRegressor(random_state=123, verbosity=0, n_jobs=1)]
+    estimators = [LGBMRegressor(random_state=15926, verbose=-1),
+                  XGBRegressor(random_state=15926, verbosity=0)]
     
     for estimator in estimators:
         data = df.copy()
-        data_train = data.loc['2015-01-01':'2024-03-02'].asfreq('h')
-        data_val = data.loc['2024-03-03':'2024-03-07'].asfreq('h')
+        data_train = data.loc[start:train_end].asfreq('h')
 
         # get estimator and search space
         est_cls = estimator.__class__
@@ -89,13 +87,12 @@ if __name__ == "__main__":
         # baysian search
         results_search, frozen_trial = bayesian_search_forecaster(
                                         forecaster   = forecaster,
-                                        y            = data.loc['2015-01-01':'2024-03-31']['grid_load'].asfreq('h'),
-                                        exog         = data.loc['2015-01-01':'2024-03-31'].drop(columns=['grid_load']),
+                                        y            = data.loc[start:train_end]['grid_load'].asfreq('h'),
+                                        exog         = data.loc[start:train_end].drop(columns=['grid_load']),
                                         cv           = cv,
-                                        metric       = 'root_mean_squared_scaled_error',
+                                        metric       = 'root_mean_squared_scaled_error', # more stability than mape
                                         search_space = search_space,
-                                        n_trials     = 1,
-                                        n_jobs = 16,
+                                        n_trials     = 50,
                                         return_best  = True)
         end_time = time.time()
 
