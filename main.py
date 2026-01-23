@@ -91,7 +91,6 @@ if __name__ == "__main__":
     metric, predictions = backtesting(forecaster, data, cv, test_end, exog=True)
     plot_predictions(data, predictions, "Recursive Model with Exogenous Features", eval_metric, metric[eval_metric].values[0])
 
-
     estimator = XGBRegressor(random_state=15926, verbosity=0)
     forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
     metric, predictions = backtesting(forecaster, data, cv, test_end, exog=False)
