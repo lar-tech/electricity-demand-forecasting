@@ -4,7 +4,7 @@ import pandas as pd
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import calendar
 
-def plot_grid_load(df):
+def plot_grid_load(df, export=False):
     plt.figure(figsize=(10,6))
     plt.plot(df['datetime'], df['grid_load'], color='tab:blue')
     plt.title("Grid Load Over Time")
@@ -12,11 +12,11 @@ def plot_grid_load(df):
     plt.ylabel("Grid Load in MWh")
     plt.grid()
     plt.tight_layout()
-    if EXPORT:
+    if export:
         plt.savefig('results/grafical_exploration/grid_load_over_time.pdf', bbox_inches='tight')
     plt.show()
 
-def plot_average_year(df):
+def plot_average_year(df, export=False):
     df = df[df['datetime'].dt.year != 2014].copy()
     yearly_mean = df.groupby('day_of_year')['grid_load'].mean()
 
@@ -50,11 +50,11 @@ def plot_average_year(df):
     plt.title("Average Grid Load Over the Year")
     plt.grid()
     plt.tight_layout()
-    if EXPORT:
+    if export:
         plt.savefig('results/grafical_exploration/average_grid_load.pdf', bbox_inches='tight')
     plt.show()
 
-def plot_average_day_hour(df):
+def plot_average_day_hour(df, export=False):
     df = df[df['datetime'].dt.year != 2014].copy()
     grp = df.groupby(['day_of_week'])['grid_load'].agg(['mean', 'std']).reset_index()
     fig, axes = plt.subplots(1, 2, figsize=(10, 6), sharey=True, sharex=False)
@@ -77,11 +77,11 @@ def plot_average_day_hour(df):
 
     fig.suptitle("Average Grid Load by Day and Hour", y=0.95)
     plt.tight_layout()
-    if EXPORT:
+    if export:
         plt.savefig('results/grafical_exploration/average_day_hour.pdf', bbox_inches='tight')
     plt.show()
 
-def plot_average_load_by_day_and_season(df):
+def plot_average_load_by_day_and_season(df, export=False):
     df = df[df['datetime'].dt.year != 2014].copy()
     month = df['datetime'].dt.month
     season_map = {
@@ -112,11 +112,11 @@ def plot_average_load_by_day_and_season(df):
 
     fig.suptitle("Average Grid Load by Day – per Season", y=0.95)
     plt.tight_layout()
-    if EXPORT:
+    if export:
         plt.savefig('results/grafical_exploration/average_grid_load_by_day_and_season.pdf', bbox_inches='tight')
     plt.show()
 
-def plot_average_load_by_hour_and_season(df):
+def plot_average_load_by_hour_and_season(df, export=False):
     df = df[df['datetime'].dt.year != 2014].copy()
     df['Hour'] = df['datetime'].dt.hour
     month = df['datetime'].dt.month
@@ -146,11 +146,11 @@ def plot_average_load_by_hour_and_season(df):
 
     fig.suptitle("Average Load by Hour – per Season", y=0.95)
     plt.tight_layout()
-    if EXPORT:
+    if export:
         plt.savefig('results/grafical_exploration/average_load_by_hour_and_season.pdf', bbox_inches='tight')
     plt.show()
 
-def plot_autocorrelation(df):
+def plot_autocorrelation(df, export=False):
     fig, ax = plt.subplots(figsize=(10, 6))
     plot_acf(df['grid_load'], ax=ax, title="", lags=60, alpha=None)
     plt.xlabel("Lags in hours")
@@ -158,7 +158,7 @@ def plot_autocorrelation(df):
     plt.title("Autocorrelation of Grid Load")
     plt.grid()
     plt.tight_layout()
-    if EXPORT:
+    if export:
         plt.savefig('results/grafical_exploration/autocorrelation.pdf', bbox_inches='tight', transparent=True)
     plt.show()
 
@@ -169,22 +169,23 @@ def plot_autocorrelation(df):
     plt.title("Partial Autocorrelation of Grid Load")
     plt.grid()
     plt.tight_layout()
-    if EXPORT:
+    if export:
         plt.savefig('results/grafical_exploration/partial_autocorrelation.pdf', bbox_inches='tight', transparent=True)
     plt.show()
 
-# params
-EXPORT = True
-os.makedirs('results/grafical_exploration', exist_ok=True)
+if __name__ == "__main__":
+    # params
+    EXPORT = True
+    os.makedirs('results/grafical_exploration', exist_ok=True)
 
-# load dataset
-df = pd.read_csv('dataset.csv', delimiter=';')
-df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
+    # load dataset
+    df = pd.read_csv('dataset.csv', delimiter=';')
+    df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
 
-# plotting functions
-plot_grid_load(df)
-plot_average_year(df)
-plot_average_day_hour(df)
-plot_average_load_by_day_and_season(df)
-plot_average_load_by_hour_and_season(df)
-plot_autocorrelation(df)
+    # plotting functions
+    plot_grid_load(df, export=EXPORT)
+    plot_average_year(df, export=EXPORT)
+    plot_average_day_hour(df, export=EXPORT)
+    plot_average_load_by_day_and_season(df, export=EXPORT)
+    plot_average_load_by_hour_and_season(df, export=EXPORT)
+    plot_autocorrelation(df, export=EXPORT)
