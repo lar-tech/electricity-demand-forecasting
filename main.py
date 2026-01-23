@@ -4,6 +4,7 @@ from skforecast.model_selection import TimeSeriesFold, backtesting_forecaster
 from skforecast.preprocessing import RollingFeatures
 from skforecast.recursive import ForecasterEquivalentDate, ForecasterRecursive
 from lightgbm import LGBMRegressor
+from xgboost import XGBRegressor
 import warnings
 from skforecast.exceptions import MissingValuesWarning
 warnings.simplefilter('ignore', category=MissingValuesWarning)
