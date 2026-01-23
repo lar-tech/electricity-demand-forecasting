@@ -76,28 +76,35 @@ if __name__ == "__main__":
     # define cross-validation scheme
     cv = TimeSeriesFold(steps=24, initial_train_size=len(data_train), refit=False)
 
-    # seasonal naive baseline
-    model_baseline = ForecasterEquivalentDate(offset=pd.DateOffset(days=1), n_offsets=1)
-    metric, predictions = backtesting(model_baseline, data, cv, test_end)
-    plot_predictions(data, predictions, "Seasonal Naive Forecast", eval_metric, metric[eval_metric].values[0])
-    results.loc['Seasonal Naive Forecast'] = metric.iloc[0]
+    # # seasonal naive baseline
+    # model_baseline = ForecasterEquivalentDate(offset=pd.DateOffset(days=1), n_offsets=1)
+    # metric, predictions = backtesting(model_baseline, data, cv, test_end)
+    # plot_predictions(data, predictions, "Seasonal Naive Forecast", eval_metric, metric[eval_metric].values[0])
+    # results.loc['Seasonal Naive Forecast'] = metric.iloc[0]
 
     # recursive lgbm without exogenous features
     estimator = LGBMRegressor(random_state=15926, verbose=-1)
     forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
     metric, predictions = backtesting(forecaster, data, cv, test_end, exog=False)
     plot_predictions(data, predictions, "Recursive Model without Exogenous Features", eval_metric, metric[eval_metric].values[0])
-
     # recursive lgbm with exogenous features
     metric, predictions = backtesting(forecaster, data, cv, test_end, exog=True)
     plot_predictions(data, predictions, "Recursive Model with Exogenous Features", eval_metric, metric[eval_metric].values[0])
 
-    # tuned recursive lgbm with exogenous features
-    estimator = LGBMRegressor(learning_rate=0.04802270167510142, n_estimators=2900, num_leaves=166,
-                              max_depth=6, min_child_samples=110, subsample=0.9404067086517863,
-                              subsample_freq=1, colsample_bytree=0.6772559947743917, reg_alpha=4.588474569608268e-05,
-                              reg_lambda=0.0004650965158027969,
-                              random_state=15926, verbose=-1)
+
+    estimator = XGBRegressor(random_state=15926, verbosity=0)
     forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
+    metric, predictions = backtesting(forecaster, data, cv, test_end, exog=False)
+    plot_predictions(data, predictions, "Recursive Model without Exogenous Features", eval_metric, metric[eval_metric].values[0])
     metric, predictions = backtesting(forecaster, data, cv, test_end, exog=True)
-    plot_predictions(data, predictions, "Tuned Recursive Model with Exogenous Features", eval_metric, metric[eval_metric].values[0])
+    plot_predictions(data, predictions, "Recursive Model with Exogenous Features", eval_metric, metric[eval_metric].values[0])
+
+    # # tuned recursive lgbm with exogenous features
+    # estimator = LGBMRegressor(learning_rate=0.04802270167510142, n_estimators=2900, num_leaves=166,
+    #                           max_depth=6, min_child_samples=110, subsample=0.9404067086517863,
+    #                           subsample_freq=1, colsample_bytree=0.6772559947743917, reg_alpha=4.588474569608268e-05,
+    #                           reg_lambda=0.0004650965158027969,
+    #                           random_state=15926, verbose=-1)
+    # forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
+    # metric, predictions = backtesting(forecaster, data, cv, test_end, exog=True)
+    # plot_predictions(data, predictions, "Tuned Recursive Model with Exogenous Features", eval_metric, metric[eval_metric].values[0])
