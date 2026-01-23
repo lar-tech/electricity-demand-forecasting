@@ -1,11 +1,17 @@
-import matplotlib.pyplot as plt
+import os
+import numpy as np
 import pandas as pd
 from skforecast.model_selection import TimeSeriesFold, backtesting_forecaster
 from skforecast.preprocessing import RollingFeatures
 from skforecast.recursive import ForecasterRecursive
 from lightgbm import LGBMRegressor
+from xgboost import XGBRegressor
+import warnings
+from skforecast.exceptions import MissingValuesWarning, LongTrainingWarning
+warnings.simplefilter('ignore', category=MissingValuesWarning)
+warnings.simplefilter('ignore', category=LongTrainingWarning)
 
-def sequential_feature_importance(importances_sorted, estimator, data, cv, metrics):
+def sequential_feature_importance(importances_sorted, estimator, data, cv, test_end, metrics):
     features_use = []
     lags = []
     roll_pairs = []
@@ -26,88 +32,108 @@ def sequential_feature_importance(importances_sorted, estimator, data, cv, metri
         wf = None
         if roll_pairs:
             wf = RollingFeatures(stats=[p[0] for p in roll_pairs], window_sizes=[p[1] for p in roll_pairs]) 
+
         forecaster_i = ForecasterRecursive(estimator=estimator, lags=sorted(set(lags)) if lags else None, window_features=wf)
-        metric, predictions = backtesting_forecaster(
+        metric, _ = backtesting_forecaster(
                                     forecaster=forecaster_i,
-                                    y=data['grid_load'].asfreq('h'),
-                                    exog=data[features_use] if features_use else None,
+                                    y = df.loc['2015-01-01':test_end]['grid_load'].asfreq('h'),
+                                    exog=df.loc['2015-01-01':test_end][features_use] if features_use else None,
                                     cv=cv,
                                     metric=metrics,
                                     verbose=False)
         results.append(metric["mean_absolute_percentage_error"].iloc[0])
         if i % 5 == 0:
             print(f"Processed {i} features")
-
     return results
 
-# load dataset
-df = pd.read_csv('data/dataset.csv', delimiter=';')
-df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
-df = df.set_index('datetime').sort_index()
+def feature_importance(reg):
+    # XGBoost
+    if hasattr(reg, "get_booster"):
+        booster = reg.get_booster()
 
-# create train and validation sets
-data = df.copy()
-data_train = data.loc['2015-01-01':'2024-03-02'].asfreq('h')
-data_val = data.loc['2024-03-03':'2024-03-09'].asfreq('h')
+        score_gain = booster.get_score(importance_type="gain")
+        score_split = booster.get_score(importance_type="weight")  # split count
 
-# define cross-validation
-cv = TimeSeriesFold(steps=24, initial_train_size=len(data_train), refit=False)
+        imp_gain = (pd.DataFrame({"feature": list(score_gain.keys()),
+                                  "importance": list(score_gain.values())})
+                    .sort_values("importance", ascending=False))
+        imp_split = (pd.DataFrame({"feature": list(score_split.keys()),
+                                   "importance": list(score_split.values())})
+                     .sort_values("importance", ascending=False))
+    # LightGBM
+    else:
+        booster = reg.booster_
+        feature_names = booster.feature_name()
 
-# autoregressive model with LightGBM
-estimator = LGBMRegressor(random_state=123, verbose=-1, n_estimators=800, max_depth=6, learning_rate=0.20213758391513376, reg_alpha=0.3431780161508694, reg_lambda=0.7290497073840416)
-window_features = RollingFeatures(stats=['mean', 'std', 'min', 'max'], window_sizes=[24*3, 24*7, 24*7, 24*7])
-lags = 24
-forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
-forecaster.fit(y=data_train['grid_load'], exog=data_train.drop(columns=['grid_load']))
+        imp_gain = (pd.DataFrame({"feature": feature_names,
+                                  "importance": booster.feature_importance(importance_type="gain")})
+                    .sort_values("importance", ascending=False))
+        imp_split = (pd.DataFrame({"feature": feature_names,
+                                   "importance": booster.feature_importance(importance_type="split")})
+                     .sort_values("importance", ascending=False))
+        
+    return imp_gain, imp_split
 
-# Feature importance
-reg = forecaster.estimator
-booster = reg.booster_
-feature_names = booster.feature_name()
-imp_gain = pd.DataFrame({"feature": feature_names,
-                        "importance": booster.feature_importance(importance_type="gain")
-                        }).sort_values("importance", ascending=True)
-imp_split = pd.DataFrame({"feature": feature_names,
-                          "importance": booster.feature_importance(importance_type="split")
-                          }).sort_values("importance", ascending=True)
+if __name__ == "__main__":
+    # params
+    start = '2015-01-01'
+    train_end = '2023-12-31'
+    test_end = '2024-12-31'
+    eval_metric = 'mean_absolute_percentage_error'
+    lags = 24
+    window_features = RollingFeatures(stats=['mean', 'std', 'min', 'max'], window_sizes=[24*3, 24*7, 24*7, 24*7])
+    os.makedirs('results/explain_model', exist_ok=True)
 
-metrics = ['mean_absolute_error', 'mean_squared_error', 'mean_absolute_percentage_error']
-imp_gain_sorted = imp_gain.sort_values('importance', ascending=False)['feature'].tolist()
-imp_split_sorted = imp_split.sort_values('importance', ascending=False)['feature'].tolist()
+    # load dataset
+    df = pd.read_csv('dataset.csv', delimiter=';')
+    df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
+    df = df.set_index('datetime').sort_index()
+    data = df.copy()
+    data_train = data.loc[start:train_end].asfreq('h')
 
-# Sequentially add features
-results_gain = sequential_feature_importance(imp_gain_sorted, estimator, data, cv, metrics)
-results_split = sequential_feature_importance(imp_split_sorted, estimator, data, cv, metrics)
+    # define cross-validation
+    cv = TimeSeriesFold(steps=24, initial_train_size=len(data_train), refit=False)
 
-# save
-imp_gain.to_csv('data/results/feature_importance_gain.csv', index=False)
-imp_split.to_csv('data/results/feature_importance_split.csv', index=False)
-results_gain_df = pd.DataFrame({"num_features": range(1, len(results_gain)+1), "mape": results_gain})
-results_split_df = pd.DataFrame({"num_features": range(1, len(results_split)+1), "mape": results_split})
-results_gain_df.to_csv('data/results/sequential_feature_importance_gain.csv', index=False)
-results_split_df.to_csv('data/results/sequential_feature_importance_split.csv', index=False)
+    # define estimators
+    estimators = [LGBMRegressor(learning_rate=0.04802270167510142, n_estimators=2900, num_leaves=166,
+                                max_depth=6, min_child_samples=110, subsample=0.9404067086517863,
+                                subsample_freq=1, colsample_bytree=0.6772559947743917, reg_alpha=4.588474569608268e-05,
+                                reg_lambda=0.0004650965158027969,
+                                random_state=15926, verbose=-1),
+                  XGBRegressor(learning_rate=0.11931754325692699, n_estimators=4300, max_depth=3,
+                                min_child_weight=0.5561979540638877, subsample=0.6180274857801566,
+                                colsample_bytree=0.6711179008290529, gamma=9.05093671390064,
+                                reg_alpha=1.175620487499817, reg_lambda=7.237759323627126,
+                                random_state=123, verbosity=0)]
 
-# plot
-fig, ax = plt.subplots(1, 2, figsize=(16, 5))
-ax[0].barh(imp_gain["feature"].tail(10), imp_gain["importance"].tail(10))
-ax[0].set_xscale('log')
-ax[0].set_xlabel("Total gain")
-ax[1].barh(imp_split["feature"].tail(10), imp_split["importance"].tail(10))
-ax[1].set_xlabel("Split count")
-plt.tight_layout()
-plt.show()
+    for estimator in estimators:
+        estimator_name = estimator.__class__.__name__
+        print(f"Processing estimator: {estimator_name}")
+        forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
+        forecaster.fit(y=data_train['grid_load'], exog=data_train.drop(columns=['grid_load']))
+        imp_gain, imp_split = feature_importance(forecaster.estimator)
+        
+        # Sequentially add features
+        results_gain = sequential_feature_importance(imp_gain["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
+        results_split = sequential_feature_importance(imp_split["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
 
-fig, ax = plt.subplots(1, 2, figsize=(16, 5))
-ax[0].plot(range(1, len(results_gain)+1), results_gain, marker='o')
-ax[0].set_xlabel('Number of Features Used')
-ax[0].set_ylabel('MAPE')
-ax[0].set_title('Feature importance: Gain')
-ax[0].grid()
+        # ensure imp_gain and results_gain have the same length
+        min_length = min(len(imp_gain), len(results_gain))
+        imp_gain = imp_gain.head(min_length)
+        results_gain = results_gain[:min_length]
+        imp_split = imp_split.head(min_length)
+        results_split = results_split[:min_length]
 
-ax[1].plot(range(1, len(results_split)+1), results_split, marker='o')
-ax[1].set_xlabel('Number of Features Used')
-ax[1].set_ylabel('MAPE')
-ax[1].set_title('Feature importance: Split count')
-ax[1].grid()
-plt.tight_layout()
-plt.show()
+        # save results
+        results_gain_df = pd.DataFrame({"feature": imp_gain["feature"].to_numpy(),
+                                        "importance_gain": imp_gain["importance"].to_numpy(),
+                                        "sequential_mape_gain": np.asarray(results_gain)})
+        results_gain_df["k"] = np.arange(1, len(results_gain_df) + 1)
+
+        results_split_df = pd.DataFrame({"feature": imp_split["feature"].to_numpy(),
+                                         "importance_split": imp_split["importance"].to_numpy(),
+                                         "sequential_mape_split": np.asarray(results_split)})
+        results_split_df["k"] = np.arange(1, len(results_split_df) + 1)
+
+        results_gain_df.to_csv(f"results/explain_model/feature_importance_gain_{estimator_name}.csv", index=False)
+        results_split_df.to_csv(f"results/explain_model/feature_importance_split_{estimator_name}.csv", index=False)
