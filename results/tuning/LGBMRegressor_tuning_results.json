@@ -1,18 +1,17 @@
 {
     "best_params": {
-        "learning_rate": 0.09343646663326644,
-        "n_estimators": 2300,
-        "num_leaves": 75,
-        "max_depth": 4,
-        "min_child_samples": 17,
-        "subsample": 0.7148524752395755,
-        "subsample_freq": 7,
-        "colsample_bytree": 0.712714661252391,
-        "reg_alpha": 0.00039085983473037214,
-        "reg_lambda": 2.531631243398411e-07,
-        "random_state": 123,
-        "verbose": -1,
-        "n_jobs": 1
+        "learning_rate": 0.04802270167510142,
+        "n_estimators": 2900,
+        "num_leaves": 166,
+        "max_depth": 6,
+        "min_child_samples": 110,
+        "subsample": 0.9404067086517863,
+        "subsample_freq": 1,
+        "colsample_bytree": 0.6772559947743917,
+        "reg_alpha": 4.588474569608268e-05,
+        "reg_lambda": 0.0004650965158027969,
+        "random_state": 15926,
+        "verbose": -1
     },
     "best_lags": [
         1,
@@ -40,5 +39,5 @@
         23,
         24
     ],
-    "tuning_time_seconds": 3507.029019832611
+    "tuning_time_seconds": 4704.422438144684
 }

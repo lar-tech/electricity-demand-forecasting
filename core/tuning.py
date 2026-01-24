@@ -58,7 +58,8 @@ if __name__ == "__main__":
     FIXED_PARAMS_BY_CLASS = {   LGBMRegressor: {"random_state": 15926, "verbose": -1},
                                 XGBRegressor: {"random_state": 15926, "verbosity": 0},}
     start = '2015-01-01'
-    train_end = '2023-12-31'
+    train_end = '2022-12-31'
+    validation_end = '2023-12-31'
     test_end = '2024-12-31'
 
     # load dataset
@@ -71,14 +72,14 @@ if __name__ == "__main__":
     
     for estimator in estimators:
         data = df.copy()
-        data_train = data.loc[start:train_end].asfreq('h')
 
         # get estimator and search space
         est_cls = estimator.__class__
         search_space = SEARCH_SPACE_BY_CLASS[est_cls]
 
         # forecaster
-        cv = TimeSeriesFold(steps=24, initial_train_size=len(data_train), refit=False)
+          
+        cv = TimeSeriesFold(steps=24, initial_train_size=len(data.loc[start:train_end].asfreq('h')), refit=False)
         window_features = RollingFeatures(stats = ['mean', 'std', 'min', 'max'], window_sizes = [24*3, 24*7, 24*7, 24*7])
         lags = 24
         forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
@@ -87,8 +88,8 @@ if __name__ == "__main__":
         # baysian search
         results_search, frozen_trial = bayesian_search_forecaster(
                                         forecaster   = forecaster,
-                                        y            = data.loc[start:train_end]['grid_load'].asfreq('h'),
-                                        exog         = data.loc[start:train_end].drop(columns=['grid_load']),
+                                        y            = data.loc[start:validation_end]['grid_load'].asfreq('h'),
+                                        exog         = data.loc[start:validation_end].drop(columns=['grid_load']),
                                         cv           = cv,
                                         metric       = 'root_mean_squared_scaled_error', # more stability than mape
                                         search_space = search_space,
