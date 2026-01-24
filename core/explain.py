@@ -121,13 +121,6 @@ if __name__ == "__main__":
         results_gain = sequential_feature_importance(imp_gain["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
         results_split = sequential_feature_importance(imp_split["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
 
-        # ensure imp_gain and results_gain have the same length
-        min_length = min(len(imp_gain), len(results_gain))
-        imp_gain = imp_gain.head(min_length)
-        results_gain = results_gain[:min_length]
-        imp_split = imp_split.head(min_length)
-        results_split = results_split[:min_length]
-
         # save results
         results_gain_df = pd.DataFrame({"feature": imp_gain["feature"].to_numpy(),
                                         "importance_gain": imp_gain["importance"].to_numpy(),
