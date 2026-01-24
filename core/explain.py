@@ -100,15 +100,19 @@ if __name__ == "__main__":
                                 subsample_freq=1, colsample_bytree=0.6772559947743917, reg_alpha=4.588474569608268e-05,
                                 reg_lambda=0.0004650965158027969,
                                 random_state=15926, verbose=-1),
-                  XGBRegressor(learning_rate=0.11931754325692699, n_estimators=4300, max_depth=3,
-                                min_child_weight=0.5561979540638877, subsample=0.6180274857801566,
-                                colsample_bytree=0.6711179008290529, gamma=9.05093671390064,
-                                reg_alpha=1.175620487499817, reg_lambda=7.237759323627126,
-                                random_state=123, verbosity=0)]
+                  XGBRegressor(learning_rate=0.02176000708646436, n_estimators=3900, max_depth=7,
+                                min_child_weight=11.730521341347089, subsample=0.7375957356031976,
+                                colsample_bytree=0.6752518587096829, gamma=7.429905815763753,
+                                reg_alpha=0.009558252940803038, reg_lambda=0.0007996684456278945,
+                                random_state=15926, verbosity=0)]
 
     for estimator in estimators:
         estimator_name = estimator.__class__.__name__
         print(f"Processing estimator: {estimator_name}")
+        if estimator_name == "LGBMRegressor":
+            lags = 24
+        else:
+            lags = list(range(1,25)) + [167, 168, 169]
         forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
         forecaster.fit(y=data_train['grid_load'], exog=data_train.drop(columns=['grid_load']))
         imp_gain, imp_split = feature_importance(forecaster.estimator)
