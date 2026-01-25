@@ -16,9 +16,5 @@ venv*/
 .DS_Store
 
 # tests
-test/
+test*/
 test.*
-
-# data
-*.log
-tests/
