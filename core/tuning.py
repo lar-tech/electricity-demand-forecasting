@@ -52,15 +52,15 @@ def search_space_xgb(trial):
 if __name__ == "__main__":
     # params
     os.makedirs('results/tuning/', exist_ok=True)
-    SEARCH_SPACE_BY_CLASS = {   LGBMRegressor: search_space_lgbm,
-                                XGBRegressor: search_space_xgb,}
+    SEARCH_SPACE_BY_CLASS = {LGBMRegressor: search_space_lgbm, XGBRegressor: search_space_xgb,}
 
-    FIXED_PARAMS_BY_CLASS = {   LGBMRegressor: {"random_state": 15926, "verbose": -1},
-                                XGBRegressor: {"random_state": 15926, "verbosity": 0},}
+    FIXED_PARAMS_BY_CLASS = {LGBMRegressor: {"random_state": 15926, "verbose": -1}, XGBRegressor: {"random_state": 15926, "verbosity": 0},}
     start = '2015-01-01'
     train_end = '2022-12-31'
     validation_end = '2023-12-31'
     test_end = '2024-12-31'
+    metrics = ['mean_absolute_percentage_error', 'mean_absolute_error', 'mean_squared_error', 'root_mean_squared_scaled_error']
+    tuning_metric = 'mean_squared_error'
 
     # load dataset
     df = pd.read_csv('dataset.csv', delimiter=';')
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         search_space = SEARCH_SPACE_BY_CLASS[est_cls]
 
         # forecaster
-          
+        
         cv = TimeSeriesFold(steps=24, initial_train_size=len(data.loc[start:train_end].asfreq('h')), refit=False)
         window_features = RollingFeatures(stats = ['mean', 'std', 'min', 'max'], window_sizes = [24*3, 24*7, 24*7, 24*7])
         lags = 24
@@ -91,19 +91,13 @@ if __name__ == "__main__":
                                         y            = data.loc[start:validation_end]['grid_load'].asfreq('h'),
                                         exog         = data.loc[start:validation_end].drop(columns=['grid_load']),
                                         cv           = cv,
-                                        metric       = 'root_mean_squared_scaled_error', # more stability than mape
+                                        metric       = tuning_metric,
                                         search_space = search_space,
-                                        n_trials     = 50,
+                                        n_trials     = 100,
                                         return_best  = True)
         end_time = time.time()
 
         # save best params
-        best_params = results_search.at[0, 'params']
-        best_params.update(FIXED_PARAMS_BY_CLASS.get(est_cls, {}))
-        best_lags = results_search.at[0, 'lags']
-        output = {
-        "best_params": best_params,
-        "best_lags": best_lags.tolist(),
-        "tuning_time_seconds": end_time - start_time}
-        with open(f'results/tuning/{estimator.__class__.__name__}_tuning_results.json', 'w') as f:
-            json.dump(output, f, indent=4)
+        results_search.to_csv(f'results/tuning/{estimator.__class__.__name__}_tuning.csv', index=True)
+        with open(f'results/tuning/{estimator.__class__.__name__}_tuning_time.txt', 'w') as f:
+            f.write(f'Time taken for tuning: {end_time - start_time} seconds.')
