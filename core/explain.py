@@ -1,4 +1,5 @@
 import os
+import ast
 import numpy as np
 import pandas as pd
 from skforecast.model_selection import TimeSeriesFold, backtesting_forecaster
@@ -95,24 +96,24 @@ if __name__ == "__main__":
     cv = TimeSeriesFold(steps=24, initial_train_size=len(data_train), refit=False)
 
     # define estimators
-    estimators = [LGBMRegressor(learning_rate=0.04802270167510142, n_estimators=2900, num_leaves=166,
-                                max_depth=6, min_child_samples=110, subsample=0.9404067086517863,
-                                subsample_freq=1, colsample_bytree=0.6772559947743917, reg_alpha=4.588474569608268e-05,
-                                reg_lambda=0.0004650965158027969,
-                                random_state=15926, verbose=-1),
-                  XGBRegressor(learning_rate=0.02176000708646436, n_estimators=3900, max_depth=7,
-                                min_child_weight=11.730521341347089, subsample=0.7375957356031976,
-                                colsample_bytree=0.6752518587096829, gamma=7.429905815763753,
-                                reg_alpha=0.009558252940803038, reg_lambda=0.0007996684456278945,
-                                random_state=15926, verbosity=0)]
+    tuning_results_lgbm = pd.read_csv('results/tuning/LGBMRegressor_tuning.csv')
+    tuning_results_xgb = pd.read_csv('results/tuning/XGBRegressor_tuning.csv')
+    best_params_lgbm = tuning_results_lgbm.iloc[-1]
+    best_params_xgb = tuning_results_xgb.iloc[-1]
+    params_lgbm = ast.literal_eval(best_params_lgbm['params'])
+    params_xgb = ast.literal_eval(best_params_xgb['params'])
+    best_lags_lgbm = list(map(int, best_params_lgbm['lags'].strip("[]").split()))
+    best_lags_xgb = list(map(int, best_params_xgb['lags'].strip("[]").split()))
+        
+    estimators = [LGBMRegressor(**params_lgbm, verbose=-1), XGBRegressor(**params_xgb, verbosity=0)]
 
     for estimator in estimators:
         estimator_name = estimator.__class__.__name__
         print(f"Processing estimator: {estimator_name}")
         if estimator_name == "LGBMRegressor":
-            lags = 24
+            lags = best_lags_lgbm
         else:
-            lags = list(range(1,25)) + [167, 168, 169]
+            lags = best_lags_xgb
         forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
         forecaster.fit(y=data_train['grid_load'], exog=data_train.drop(columns=['grid_load']))
         imp_gain, imp_split = feature_importance(forecaster.estimator)
