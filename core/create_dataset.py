@@ -4,6 +4,7 @@ from meteostat import Hourly
 import pandas as pd 
 import requests
 from tqdm import tqdm
+import numpy as np
 
 # Fetching functions
 def fetch_smard_data(start_date: datetime, end_date: datetime, filters: dict, region: str, resolution: str) -> pd.DataFrame:
@@ -174,6 +175,26 @@ def fetch_weather_data(start: datetime, end: datetime) -> pd.DataFrame:
             df_weather_all = pd.merge(df_weather_all, df_weather, on=['datetime'], how='left')
     return df_weather_all
 
+def add_lagged_year(df):
+    for i in range(1, 9):
+        col_name = f'grid_load_year_{i}'
+        values = []
+        
+        for dt in df.index:
+            year_ago = dt - pd.DateOffset(years=i)
+            weekday_diff = dt.weekday() - year_ago.weekday()
+            if weekday_diff < -3:
+                weekday_diff += 7
+            equivalent_dt = year_ago + pd.Timedelta(days=weekday_diff)
+            
+            if equivalent_dt in df.index:
+                values.append(df.loc[equivalent_dt, 'grid_load'])
+            else:
+                values.append(np.nan)
+        
+        df[col_name] = values
+    return df
+
 # main function
 def create_dataset():
     # fetch power consumption data
@@ -181,6 +202,11 @@ def create_dataset():
         410: "grid_load"
     }
     df = fetch_smard_data(start_date=datetime(2015, 1, 1), end_date=datetime(2025, 1, 1), filters=consumption, region="50Hertz", resolution="hour")
+
+    # add lagged year features
+    df = df.set_index('datetime').sort_index()
+    df = add_lagged_year(df)
+    df = df.reset_index()
 
     # fetch forcasted generation data
     forcasted_generation = {
