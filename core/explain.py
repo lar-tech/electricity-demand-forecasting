@@ -47,9 +47,10 @@ def sequential_feature_importance(importances_sorted, estimator, data, cv, test_
             print(f"Processed {i} features")
     return results
 
-def feature_importance(reg):
+def feature_importance(reg, estimator_name):
     # XGBoost
-    if hasattr(reg, "get_booster"):
+    if estimator_name == "XGBRegressor":
+        print("Extracting feature importance for XGBRegressor")
         booster = reg.get_booster()
 
         score_gain = booster.get_score(importance_type="gain")
@@ -62,7 +63,7 @@ def feature_importance(reg):
                                    "importance": list(score_split.values())})
                      .sort_values("importance", ascending=False))
     # LightGBM
-    else:
+    elif estimator_name == "LGBMRegressor":
         booster = reg.booster_
         feature_names = booster.feature_name()
 
@@ -98,6 +99,8 @@ if __name__ == "__main__":
     # define estimators
     tuning_results_lgbm = pd.read_csv('results/tuning/LGBMRegressor_tuning.csv')
     tuning_results_xgb = pd.read_csv('results/tuning/XGBRegressor_tuning.csv')
+    tuning_results_lgbm = tuning_results_lgbm.iloc[::-1].reset_index(drop=True)
+    tuning_results_xgb = tuning_results_xgb.iloc[::-1].reset_index(drop=True)
     best_params_lgbm = tuning_results_lgbm.iloc[-1]
     best_params_xgb = tuning_results_xgb.iloc[-1]
     params_lgbm = ast.literal_eval(best_params_lgbm['params'])
@@ -116,22 +119,27 @@ if __name__ == "__main__":
             lags = best_lags_xgb
         forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
         forecaster.fit(y=data_train['grid_load'], exog=data_train.drop(columns=['grid_load']))
-        imp_gain, imp_split = feature_importance(forecaster.estimator)
+        imp_gain, imp_split = feature_importance(forecaster.estimator, estimator_name)
+
+        print("Feature importance (gain):")
+        print(imp_gain.head(10))
+        print("Feature importance (split):")
+        print(imp_split.head(10))
         
-        # Sequentially add features
-        results_gain = sequential_feature_importance(imp_gain["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
-        results_split = sequential_feature_importance(imp_split["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
+        # # Sequentially add features
+        # results_gain = sequential_feature_importance(imp_gain["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
+        # results_split = sequential_feature_importance(imp_split["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
 
-        # save results
-        results_gain_df = pd.DataFrame({"feature": imp_gain["feature"].to_numpy(),
-                                        "importance_gain": imp_gain["importance"].to_numpy(),
-                                        "sequential_mape_gain": np.asarray(results_gain)})
-        results_gain_df["k"] = np.arange(1, len(results_gain_df) + 1)
+        # # save results
+        # results_gain_df = pd.DataFrame({"feature": imp_gain["feature"].to_numpy(),
+        #                                 "importance_gain": imp_gain["importance"].to_numpy(),
+        #                                 "sequential_mape_gain": np.asarray(results_gain)})
+        # results_gain_df["k"] = np.arange(1, len(results_gain_df) + 1)
 
-        results_split_df = pd.DataFrame({"feature": imp_split["feature"].to_numpy(),
-                                         "importance_split": imp_split["importance"].to_numpy(),
-                                         "sequential_mape_split": np.asarray(results_split)})
-        results_split_df["k"] = np.arange(1, len(results_split_df) + 1)
+        # results_split_df = pd.DataFrame({"feature": imp_split["feature"].to_numpy(),
+        #                                  "importance_split": imp_split["importance"].to_numpy(),
+        #                                  "sequential_mape_split": np.asarray(results_split)})
+        # results_split_df["k"] = np.arange(1, len(results_split_df) + 1)
 
-        results_gain_df.to_csv(f"results/explain_model/feature_importance_gain_{estimator_name}.csv", index=False)
-        results_split_df.to_csv(f"results/explain_model/feature_importance_split_{estimator_name}.csv", index=False)
+        # results_gain_df.to_csv(f"results/explain_model/feature_importance_gain_{estimator_name}.csv", index=False)
+        # results_split_df.to_csv(f"results/explain_model/feature_importance_split_{estimator_name}.csv", index=False)
