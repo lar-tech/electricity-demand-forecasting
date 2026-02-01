@@ -120,26 +120,21 @@ if __name__ == "__main__":
         forecaster = ForecasterRecursive(estimator=estimator, lags=lags, window_features=window_features)
         forecaster.fit(y=data_train['grid_load'], exog=data_train.drop(columns=['grid_load']))
         imp_gain, imp_split = feature_importance(forecaster.estimator, estimator_name)
-
-        print("Feature importance (gain):")
-        print(imp_gain.head(10))
-        print("Feature importance (split):")
-        print(imp_split.head(10))
         
-        # # Sequentially add features
-        # results_gain = sequential_feature_importance(imp_gain["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
-        # results_split = sequential_feature_importance(imp_split["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
+        # Sequentially add features
+        results_gain = sequential_feature_importance(imp_gain["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
+        results_split = sequential_feature_importance(imp_split["feature"].to_list(), estimator, data, cv, test_end, eval_metric)
 
-        # # save results
-        # results_gain_df = pd.DataFrame({"feature": imp_gain["feature"].to_numpy(),
-        #                                 "importance_gain": imp_gain["importance"].to_numpy(),
-        #                                 "sequential_mape_gain": np.asarray(results_gain)})
-        # results_gain_df["k"] = np.arange(1, len(results_gain_df) + 1)
+        # save results
+        results_gain_df = pd.DataFrame({"feature": imp_gain["feature"].to_numpy(),
+                                        "importance_gain": imp_gain["importance"].to_numpy(),
+                                        "sequential_mape_gain": np.asarray(results_gain)})
+        results_gain_df["k"] = np.arange(1, len(results_gain_df) + 1)
 
-        # results_split_df = pd.DataFrame({"feature": imp_split["feature"].to_numpy(),
-        #                                  "importance_split": imp_split["importance"].to_numpy(),
-        #                                  "sequential_mape_split": np.asarray(results_split)})
-        # results_split_df["k"] = np.arange(1, len(results_split_df) + 1)
+        results_split_df = pd.DataFrame({"feature": imp_split["feature"].to_numpy(),
+                                         "importance_split": imp_split["importance"].to_numpy(),
+                                         "sequential_mape_split": np.asarray(results_split)})
+        results_split_df["k"] = np.arange(1, len(results_split_df) + 1)
 
-        # results_gain_df.to_csv(f"results/explain_model/feature_importance_gain_{estimator_name}.csv", index=False)
-        # results_split_df.to_csv(f"results/explain_model/feature_importance_split_{estimator_name}.csv", index=False)
+        results_gain_df.to_csv(f"results/explain_model/feature_importance_gain_{estimator_name}.csv", index=False)
+        results_split_df.to_csv(f"results/explain_model/feature_importance_split_{estimator_name}.csv", index=False)
