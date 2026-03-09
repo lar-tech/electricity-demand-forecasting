@@ -1,6 +1,11 @@
 matplotlib==3.10.7
-pandas==2.2.3
-skforecast==0.19.1
+pandas==2.3.3
+numpy==2.3.4
+skforecast==0.19.0
 lightgbm==4.6.0
+xgboost==3.1.2
 requests==2.32.5
-meteostat==2.0.1
+meteostat==1.7.6
+tqdm==4.67.1
+statsmodels==0.14.5
+shap==0.50.0

@@ -256,3 +256,6 @@ def create_dataset():
     df = df.astype({col: 'float64' for col in df.select_dtypes(include=['Float64', 'UInt32']).columns})
     df.to_csv('dataset.csv', sep=';', index=False)
     return df
+
+if __name__ == "__main__":
+    create_dataset()

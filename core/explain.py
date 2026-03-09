@@ -43,8 +43,9 @@ def sequential_feature_importance(importances_sorted, estimator, data, cv, test_
                                     metric=metrics,
                                     verbose=False)
         results.append(metric["mean_absolute_percentage_error"].iloc[0])
-        if i % 5 == 0:
+        if i % 3 == 0:
             print(f"Processed {i} features")
+            break
     return results
 
 def feature_importance(reg, estimator_name):

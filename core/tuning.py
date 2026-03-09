@@ -78,7 +78,6 @@ if __name__ == "__main__":
         search_space = SEARCH_SPACE_BY_CLASS[est_cls]
 
         # forecaster
-        
         cv = TimeSeriesFold(steps=24, initial_train_size=len(data.loc[start:train_end].asfreq('h')), refit=False)
         window_features = RollingFeatures(stats = ['mean', 'std', 'min', 'max'], window_sizes = [24*3, 24*7, 24*7, 24*7])
         lags = 24
