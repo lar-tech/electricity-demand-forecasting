@@ -1,0 +1,192 @@
+\begin{tikzpicture}
+    \begin{groupplot}[
+      group style={
+        group size=3 by 1,
+        horizontal sep=0.225cm,
+        vertical sep=0.05cm,
+      },
+      small axis,
+      width=0.4\linewidth,
+      height=0.95\imageheight,
+      grid=both,
+      ymin=0, ymax=15,
+      legend image code/.code={\draw[#1, /tikz/every mark/.append style={fill}, mark repeat=2, mark phase=2]plot coordinates {(0cm,0cm) (0.3cm,0cm) (0.6cm,0cm)};}
+    ]
+    
+        % Year
+        \nextgroupplot[
+            xmin=1, xmax=12,
+            ylabel={MAPE in \%},
+            xtick={1,2,3,4,5,6,7,8,9,10,11,12},
+            xticklabels={$\mathrm{Jan.}$, $\mathrm{Feb.}$, $\mathrm{Mar.}$, $\mathrm{Apr.}$, $\mathrm{May}$, $\mathrm{Jun.}$, $\mathrm{Jul.}$, $\mathrm{Aug.}$, $\mathrm{Sep.}$, $\mathrm{Oct.}$, $\mathrm{Nov.}$, $\mathrm{Dec.}$},
+            xticklabel style={rotate=90}
+        ]
+        \addplot+[color=tabblue, mark=*, mark size=1pt, mark options={fill=tabblue}] coordinates {
+        (1, 8.3831842445)
+        (2, 7.1743689856)
+        (3, 8.3644735588)
+        (4, 8.4257451008)
+        (5, 9.9422717102)
+        (6, 8.4250530567)
+        (7, 8.7020817809)
+        (8, 8.9333976456)
+        (9, 9.6871970004)
+        (10, 9.4612869189)
+        (11, 7.1621872931)
+        (12, 8.0822821289)
+        };
+        \addplot+[color=tured, mark=*, mark size=1pt, mark options={fill=tured}] coordinates {
+        (1, 3.2852025075)
+        (2, 2.6551173738)
+        (3, 3.0126819250)
+        (4, 3.2013199281)
+        (5, 2.8782951606)
+        (6, 2.7206229232)
+        (7, 2.5962925493)
+        (8, 2.7843069996)
+        (9, 3.2020885131)
+        (10, 2.9202596661)
+        (11, 3.3220832289)
+        (12, 3.5149495487)
+        };
+        \addplot+[color=tabgreen, mark=*, mark size=1pt, mark options={fill=tabgreen}] coordinates {
+        (1, 3.2361117383)
+        (2, 2.6897862374)
+        (3, 2.9827052846)
+        (4, 2.9809554392)
+        (5, 2.8431613007)
+        (6, 2.6147225444)
+        (7, 2.6040155990)
+        (8, 2.6033321800)
+        (9, 3.0154012327)
+        (10, 2.9259479365)
+        (11, 2.9519987854)
+        (12, 3.4632169488)
+        };
+    
+        % Day
+        \nextgroupplot[
+            xmin=0, xmax=6,
+            yticklabels={},
+            xtick={0,1,2,3,4,5,6},
+            xticklabels={ $\mathrm{Mon.}$, $\mathrm{Tue.}$, $\mathrm{Wed.}$, $\mathrm{Thu.}$, $\mathrm{Fri.}$, $\mathrm{Sat.}$, $\mathrm{Sun.}$},
+            xticklabel style={rotate=90}
+        ]
+        \addplot+[color=tabblue, mark=*, mark size=1pt, mark options={fill=tabblue}] coordinates {
+          (0, 14.2576946719)
+          (1, 6.4734260579)
+          (2, 5.3934336314)
+          (3, 6.0626478168)
+          (4, 5.7698890270)
+          (5, 14.0254797785)
+          (6, 7.9160357589)
+        };
+        \addplot+[color=tured, mark=*, mark size=1pt, mark options={fill=tured}] coordinates {
+          (0, 2.8485557266)
+          (1, 2.8323334196)
+          (2, 2.8207602626)
+          (3, 2.9734703639)
+          (4, 2.8888205176)
+          (5, 3.3244151365)
+          (6, 3.3654602994)
+        };
+        \addplot+[color=tabgreen, mark=*, mark size=1pt, mark options={fill=tabgreen}] coordinates {
+        (0, 2.7662447824)
+        (1, 2.7718156081)
+        (2, 2.7185291700)
+        (3, 2.7784038682)
+        (4, 2.8216727383)
+        (5, 3.0406808410)
+        (6, 3.4701281500)
+        };
+    
+        % Hour
+        \nextgroupplot[
+            xmin=0, xmax=23,
+            xlabel={Hour of Day},
+            yticklabels={},
+        ]
+        \addplot+[color=tabblue, mark=*, mark size=1pt, mark options={fill=tabblue, solid}] coordinates {
+        (0, 7.2566722761)
+        (1, 7.3676542391)
+        (2, 7.6861810206)
+        (3, 8.6584365655)
+        (4, 10.6622912214)
+        (5, 11.7794662505)
+        (6, 11.3397632776)
+        (7, 10.2687120841)
+        (8, 9.4594501915)
+        (9, 8.6327201125)
+        (10, 8.6673483109)
+        (11, 9.1824115997)
+        (12, 9.6193448422)
+        (13, 9.5695277588)
+        (14, 9.2595038392)
+        (15, 8.5630823691)
+        (16, 7.7472448390)
+        (17, 7.5073320202)
+        (18, 7.4967984066)
+        (19, 7.3448300058)
+        (20, 6.9793903901)
+        (21, 6.8144557307)
+        (22, 6.8312859345)
+        (23, 7.0454464140)
+        };
+        \addlegendentry{Seasonal Na\"{i}ve Forecast};
+        \addplot+[color=tured, mark=*, mark size=1pt, mark options={fill=tured, solid}] coordinates {
+        (0, 1.1755172826)
+        (1, 1.7707061863)
+        (2, 2.1772101226)
+        (3, 2.3445224634)
+        (4, 2.6280289506)
+        (5, 2.7509421778)
+        (6, 2.7585990962)
+        (7, 2.9002465980)
+        (8, 3.1498829723)
+        (9, 3.2631101838)
+        (10, 3.3216780045)
+        (11, 3.4171689589)
+        (12, 3.5322016653)
+        (13, 3.5257602351)
+        (14, 3.4593579679)
+        (15, 3.2823863406)
+        (16, 3.1877711290)
+        (17, 3.0747718689)
+        (18, 3.1867346837)
+        (19, 3.3344733731)
+        (20, 3.3387764775)
+        (21, 3.4622988465)
+        (22, 3.4884099570)
+        (23, 3.6480312522)
+        };
+        \addlegendentry{Tuned LGBM (refitted)};
+        \addplot+[color=tabgreen, mark=*, mark size=1pt, mark options={fill=tabgreen, solid}] coordinates {
+        (0, 1.1785235488)
+        (1, 1.7451093155)
+        (2, 2.2137963522)
+        (3, 2.3700767847)
+        (4, 2.6775797399)
+        (5, 2.7344448702)
+        (6, 2.7082249134)
+        (7, 2.8101157734)
+        (8, 3.0436518725)
+        (9, 3.1796179378)
+        (10, 3.2501271937)
+        (11, 3.3168601919)
+        (12, 3.3786874072)
+        (13, 3.3699870339)
+        (14, 3.2759359588)
+        (15, 3.1299191198)
+        (16, 3.0242442030)
+        (17, 2.9197297334)
+        (18, 3.0461819114)
+        (19, 3.2158593149)
+        (20, 3.1838858691)
+        (21, 3.2672166131)
+        (22, 3.3200629831)
+        (23, 3.4664412595)
+        };
+        \addlegendentry{Tuned XGB (refitted)};
+
+    \end{groupplot}
+\end{tikzpicture}

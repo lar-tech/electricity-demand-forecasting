@@ -1,0 +1,47 @@
+\documentclass[bibresource=setup/references.bib]{setup/setup}
+\tikzexternalize[prefix=tikz/]
+\begin{document}
+
+% information
+\pagenumbering{Roman}
+\title{Electricity Demand Forecasting \\using AI}
+\department{Control Systems}
+\addauthor{Anton Valentin Dilg}{466011}{setup/figures/signature_ad.pdf}
+\addauthor[-1.1cm]{Ramin Leon Neymeyer}{466437}{setup/figures/signature_ln.pdf}
+\addauthor[-0.75cm]{Ramon Rennert}{466893}{setup/figures/signature_rr.pdf}
+\supervisor{Dr.\,Daria Palis}
+
+% front
+\maketitlepage
+\tikzexternaldisable
+\makedeclaration
+\tableofcontents \clearpage
+\tikzexternalenable
+\input{setup/abbreviations} \clearpage
+\listoffigures
+\listoftables \clearpage
+
+% sections
+\pagenumbering{arabic}
+\input{sections/01_introduction}
+\input{sections/02_dataset}
+\input{sections/03_model}
+\input{sections/04_discussion}
+\input{sections/05_conclusion}
+\clearpage
+
+% bibliography
+\ifoot{}
+\cfoot{}
+\ofoot{}
+\ihead{}
+\chead{}
+\ohead{}
+\addcontentsline{toc}{section}{References}
+\printbibliography 
+\clearpage
+
+% appendix
+\input{sections/06_appendix}
+
+\end{document}

@@ -1,0 +1,67 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        small axis,
+        xbar,
+        width=0.725\linewidth,
+        height=1.1\imageheight,
+        grid=both,
+        xlabel={Gain},
+        xmode=log,
+        log basis x=10,
+        xtickten={6,7,8,9},
+        xmin=1e6, xmax=1e9,
+        xtick={1e6,1e7,1e8,1e9},
+        xticklabels={$10^6$,$10^7$,$10^8$,$10^9$},
+        ytick=data,
+        y dir=reverse,
+        yticklabel style = {font=\ttfamily\tiny},
+        symbolic y coords={
+            lag\_1,
+            lag\_2,
+            lag\_24,
+            grid\_load\_year\_1,
+            lag\_3,
+            lag\_23,
+            hour\_cos,
+            day\_of\_week,
+            holiday\_count,
+            hour\_sin,
+            hour,
+            day\_of\_week\_sin,
+            lag\_96,
+            grid\_load\_year\_2,
+            grid\_load\_year\_3,
+            lag\_22,
+            lag\_72,
+            lag\_12,
+            day\_of\_week\_cos,
+            forecast\_solar
+        },
+        bar width=5pt,
+        enlarge y limits=0.05,
+    ]
+    
+    \addplot+[draw=none, fill=tabblue] coordinates {
+      (564878912.0000000000,lag\_1)
+      (173156448.0000000000,lag\_2)
+      (107422952.0000000000,lag\_24)
+      (95348712.0000000000,grid\_load\_year\_1)
+      (93040800.0000000000,lag\_3)
+      (88304952.0000000000,lag\_23)
+      (51268784.0000000000,hour\_cos)
+      (36462668.0000000000,day\_of\_week)
+      (24996338.0000000000,holiday\_count)
+      (23580398.0000000000,hour\_sin)
+      (21652492.0000000000,hour)
+      (13875707.0000000000,day\_of\_week\_sin)
+      (11101786.0000000000,lag\_96)
+      (8149722.5000000000,grid\_load\_year\_2)
+      (7597054.0000000000,grid\_load\_year\_3)
+      (7372230.0000000000,lag\_22)
+      (5894699.5000000000,lag\_72)
+      (5603424.5000000000,lag\_12)
+      (5363776.0000000000,day\_of\_week\_cos)
+      (4475984.0000000000,forecast\_solar)
+      };
+    \end{axis}
+\end{tikzpicture}

@@ -1,0 +1,143 @@
+\section{Discussion}
+\label{sec:discussion}
+\ihead{Discussion}
+In the following section, the training results and the performance of the final forecasting model are discussed and interpreted.
+
+Table~\ref{tab:mape_comparison} summarizes the forecasting performance of all evaluated models. A clear performance gap can be observed between models relying solely on lagged demand values and those incorporating exogenous features.
+\begin{table}[H]
+    \centering
+    \caption[Forecasting performance of different models]{Forecasting performance (\acs{MAPE} in \%) of different models with and without exogenous features.}
+    \label{tab:mape_comparison}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Model} & \textbf{Without exog.\ features} & \textbf{With exog.\ features} \\
+        \midrule
+        Seasonal Naive & 8.57 & -- \\
+        \ac{LGBM} (default) & 6.76 & 3.71 \\
+        \ac{XGB} (default) & 6.64 & 3.66  \\
+        \ac{LGBM} (tuned)   & --  & 3.16 \\
+        \ac{XGB} (tuned)   & --  & 3.15 \\
+        \ac{LGBM} (tuned and refitted)   & --  & 3.01 \\
+        \ac{XGB} (tuned and refitted)   & --  & \textbf{2.94} \\
+    \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Feature Importance}
+\label{subsec:feature_importance}
+Figure~\ref{fig:feature_importance} shows the top 20 features ranked by gain and split count for both estimators. In terms of gain, \texttt{lag\_1} and \texttt{lag\_2} dominate by a large margin in both models, confirming the strong autoregressive structure identified through the \ac{ACF} and \ac{PACF} analysis in Section~\ref{subsec:forecaster}. The third most important feature by gain is \texttt{grid\_load\_year\_1}, indicating that year-over-year demand patterns provide substantial predictive value. Temporal features such as \texttt{hour\_cos}, \texttt{hour\_sin}, and \texttt{day\_of\_week} also contribute meaningfully, reflecting the pronounced daily and weekly demand cycles observed in the exploratory analysis.
+
+The split count ranking reveals a complementary perspective. While \texttt{lag\_1} remains the most frequently used feature, temporal variables such as \texttt{hour\_sin}, \texttt{hour}, and \texttt{forecast\_solar} are split on far more often relative to their gain contribution. This suggests that these features serve as fine-grained routing variables, enabling the trees to partition the input space into distinct demand regimes, even though individual splits yield comparatively small reductions in the loss function. Notably, \texttt{forecast\_solar} ranks among the top five by split count in both models but appears lower in the gain ranking, indicating that solar generation forecasts contribute through many small, context-dependent adjustments rather than a few high-impact splits.
+
+Both estimators produce broadly consistent importance rankings, with minor differences in ordering. For instance, \acs{XGB} assigns higher gain to \texttt{lag\_24} compared to \acs{LGBM}, while \acs{LGBM} ranks \texttt{hour\_cos} higher. These differences likely reflect the distinct tree growth strategies of the two algorithms, leaf-wise for \acs{LGBM} and level-wise for \acs{XGB}, rather than fundamental disagreements about feature relevance.
+\begin{figure}[b!]
+    \centering
+    \begin{subfigure}[c]{\linewidth}
+        \centering
+        \begin{minipage}[c]{0.48\linewidth}
+            \centering
+            \input{figures/feature_importance_lgbm_gain}%
+        \end{minipage}%
+        \begin{minipage}[c]{0.48\linewidth}
+            \centering
+            \input{figures/feature_importance_lgbm_split}%
+        \end{minipage}
+        \caption{\acs{LGBM}.}
+        \label{fig:feature_importance_lgbm}
+    \end{subfigure}
+\end{figure}
+\begin{figure}[t!]\ContinuedFloat
+    \centering
+    \begin{subfigure}[c]{\linewidth}
+        \centering
+        \begin{minipage}[c]{0.48\linewidth}
+            \centering
+            \input{figures/feature_importance_xgb_gain}%
+        \end{minipage}%
+        \begin{minipage}[c]{0.48\linewidth}
+            \centering
+            \input{figures/feature_importance_xgb_split}%
+        \end{minipage}
+        \caption{\acs{XGB}.}
+        \label{fig:feature_importance_xgb}
+    \end{subfigure}
+    \caption{Top 20 features ranked by gain and split count for \acs{LGBM} and \acs{XGB}.}
+    \label{fig:feature_importance}
+\end{figure}
+
+To quantify the marginal contribution of individual features, a sequential feature addition experiment is conducted. Starting from the most important feature, additional features are added one at a time according to their importance ranking, and the resulting \ac{MAPE} is evaluated at each step. The results are shown in Figure~\ref{fig:feature_selection}. Across all four configurations, the \ac{MAPE} decreases sharply within the first five to ten features and converges beyond approximately 20 to 30 features.
+
+This indicates that the majority of predictive information is captured by a relatively small subset of features, while the remaining variables, primarily individual weather station measurements and higher-order lags, contribute only marginally.
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[c]{0.48\linewidth}
+        \centering
+        \input{figures/feature_selection_lgbm_gain}%
+        \caption{\acs{LGBM} Gain.}
+        \label{fig:feature_selection_lgbm_gain}
+    \end{subfigure}
+    \begin{subfigure}[c]{0.48\linewidth}
+        \centering
+        \input{figures/feature_selection_lgbm_split}%
+        \caption{\acs{LGBM} Split Count.}
+        \label{fig:feature_selection_lgbm_split}
+    \end{subfigure}
+% \end{figure}
+% \begin{figure}[t!]\ContinuedFloat
+%     \centering
+    \begin{subfigure}[c]{0.48\linewidth}
+        \centering
+        \input{figures/feature_selection_xgb_gain}%
+        \caption{\acs{XGB} Gain.}
+        \label{fig:feature_selection_xgb_gain}
+    \end{subfigure}
+    \begin{subfigure}[c]{0.48\linewidth}
+        \centering
+        \input{figures/feature_selection_xgb_split}%
+        \caption{\acs{XGB} Split Count.}
+        \label{fig:feature_selection_xgb_split}
+    \end{subfigure}
+    \caption{Sequential feature addition experiment added according to their importance ranking (gain and split count) for \acs{LGBM} and \acs{XGB}.}
+    \label{fig:feature_selection}
+\end{figure}
+\FloatBarrier
+The gain-based ranking generally leads to a faster initial decrease in \ac{MAPE} compared to the split count ranking, suggesting that gain provides a more effective ordering for greedy feature selection in this application.
+
+\subsection{\acs{SHAP} Values}
+\label{subsec:shap_values}
+While feature importance quantifies how much each variable contributes to the model overall, it does not reveal the direction of its effect. \ac{SHAP} values address this by assigning each feature a signed contribution to every individual prediction, grounded in cooperative game theory~\cite{lundberg_2017_unified}. Figure~\ref{fig:shap} shows the \ac{SHAP} summary plots for both estimators.
+
+The feature \texttt{lag\_1} exhibits a clear monotonic relationship: high feature values, i.e., high recent demand,  push predictions upward, while low values push them downward. The wide spread of \ac{SHAP} values, ranging from approximately $-4000$ to $+4000$\,MWh, confirms that the model anchors heavily on the most recent observation. This is consistent with the dominant role of \texttt{lag\_1} in the feature importance analysis and reflects the strong short-term autocorrelation of electricity demand.
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[c]{0.48\linewidth}
+        \centering
+        \input{figures/shap_lgbm}%
+        \caption{\acs{LGBM}.}
+        \label{fig:shap_lgbm}
+    \end{subfigure}%
+    \begin{subfigure}[c]{0.48\linewidth}
+        \centering
+        \input{figures/shap_xgb}%
+        \caption{\acs{XGB}.}
+        \label{fig:shap_xgb}
+    \end{subfigure}
+    \caption{\acs{SHAP} Summary of the most important features on the model output for \acs{LGBM} and \acs{XGB}.}
+    \label{fig:shap}
+\end{figure}
+
+The remaining top features follow interpretable patterns consistent with the demand structure discussed in Section~\ref{sec:data}. The cyclically encoded features \texttt{hour\_cos} and \texttt{hour\_sin} display clustered SHAP values corresponding to distinct demand regimes throughout the day, while \texttt{grid\_load\_year\_1} and \texttt{lag\_23} show positive \ac{SHAP} values for high historical demand, reinforcing the seasonal and daily periodicity. More generally, all lag and temporal features exhibit a monotonic relationship, higher past or structurally similar demand increases the prediction, whereas \texttt{forecast\_solar} acts in the opposite direction. This is physically plausible, as increased solar generation displaces conventional load from the grid, effectively lowering the net demand observed in the grid load signal. Both \ac{SHAP} plots are highly consistent across \acs{LGBM} and \acs{XGB}, confirming that both estimators have learned similar representations of the underlying demand drivers.
+
+
+\subsection{Temporal Error}
+\label{subsec:temporal_error}
+Figure~\ref{fig:temporal_error} decomposes the forecasting error across three temporal dimensions. The monthly breakdown shows that both ML models maintain a relatively stable \acs{MAPE} between 2.5\% and 3.5\% throughout the year, while the Seasonal Na\"{i}ve Forecast fluctuates more strongly. December exhibits the highest error across all models due to irregular demand patterns during the Christmas holiday period. The weekly breakdown reveals that Sundays are most difficult to forecast, whereas midweek days yield the lowest errors. This is consistent with the more regular and industry-driven demand patterns observed on working days.
+\begin{figure}[ht]
+    \centering
+    \input{figures/temporal_error}
+    \caption{Temporal decomposition of \acs{MAPE} by month, day of week and hour of day for the test year 2024.}
+    \label{fig:temporal_error}
+\end{figure}
+
+The hourly profile shows the most pronounced variation. Error is lowest during the nighttime hours and increases throughout the day, peaking in the late afternoon and evening. Since the backtesting framework generates forecasts starting at midnight, this pattern reflects two confounded effects: the inherent difficulty of predicting demand during transition periods with steep ramps and the accumulation of recursive prediction errors over the 24-hour forecast horizon. Notably, the Seasonal Na\"{i}ve Forecast exhibits its largest errors during the morning ramp-up between 4:00 and 8:00, which is precisely the period where the ML models achieve the greatest relative improvement.
+

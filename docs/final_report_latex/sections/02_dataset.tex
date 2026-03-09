@@ -1,0 +1,69 @@
+\section{Dataset}
+\label{sec:data}
+\ihead{Dataset}
+The dataset combines electricity demand in the 50Hertz control area with power generation forecast by source, market prices, holiday indicators, and weather data from multiple meteorological stations.
+
+Since the influence of exogenous variables on electricity demand is unknown a priori, all available features are retained during data preparation. This includes generation variables and a broad set of meteorological observations. Retaining the full feature set allows for exploratory analysis and model-based feature selection in later stages.
+
+During data inspection, duplicate and missing hourly timestamps were observed due to \ac{DST} transitions, during which one hour is repeated in autumn and omitted in spring. To ensure a unique and continuous time index required for forecasting, all timestamps are converted from local time to \ac{UTC}. Furthermore, hourly resampling is performed using left-closed, right-labeled intervals to prevent data leakage, ensuring that each aggregated value depends exclusively on past observations and is therefore suitable for forecasting applications.
+
+\paragraph*{Energy Demand}
+Electricity demand and generation data for the 50Hertz control area from 2015 to 2024 are provided by the German Federal Network Agency (Bundesnetzagentur) via the SMARD API~\cite{bundesnetzagentur_2025_smard}. The primary forecasting target is the grid load, representing total electricity demand in the region.
+
+To gain an initial understanding of the data, the time series are visualized. The annual profiles exhibit a high degree of similarity, indicating pronounced periodic behavior. To analyze characteristic intra-annual variations, the demand is averaged across all years and shown in Figure~\ref{fig:grid_load_year}. The resulting profile reveals a strong and stable seasonal pattern, with higher demand in winter and lower demand in summer, driven by increased heating, lighting, and indoor activity during colder months. This structure remains consistent throughout the observation period, suggesting no major structural changes in demand behavior between 2015 and 2024.
+
+In addition to the annual cycle, a clear reduction in demand is observed around the Christmas and New Year period. This temporary decrease aligns with reduced industrial and commercial activity during public holidays and underlines the importance of calendar-related features in electricity demand forecasting. Furthermore, in Figure~\ref{fig:average_load_by_day_and_season} it is clear that during the weekend the demand decreases for the same reason. The projects objective is a prediction of a complete day. Hence, the average grid load over a day is useful to see beforehand. Figure~\ref{fig:average_load_by_hour_and_season} illustrates a clear demand pattern, with low consumption at night and two peaks around 9am and 5pm. The morning peak results from the concurrent start of industrial and residential activity, while the evening peak reflects continued industrial demand combined with increased household consumption. As activity declines overnight, electricity demand reaches its daily minimum. This pattern is consistent across all seasons.
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[a]{0.49\linewidth}
+        \centering
+        \input{figures/load}%
+        \caption{Grid load from 2015 to 2024.}
+        \label{fig:grid_load_full}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}[a]{0.49\linewidth}
+        \centering
+        \input{figures/load_annual}%
+        \caption{Average annual grid load.}
+        \label{fig:grid_load_year}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.49\linewidth}
+        \centering
+        \input{figures/load_day}%
+       \caption{Average weekly grid load by season.}
+        \label{fig:average_load_by_day_and_season}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}[b]{0.49\linewidth}
+        \centering
+        \input{figures/load_hour}%
+        \caption{Average daily grid load by season.}
+        \label{fig:average_load_by_hour_and_season}
+    \end{subfigure}
+    \caption{Temporal patterns of electricity demand across multiple time scales.}
+    \label{fig:grid_load_overview}
+\end{figure}
+
+\paragraph*{Temporal Features}
+Temporal features are included to capture recurring demand patterns driven by human behavior and institutional schedules. Electricity consumption exhibits pronounced daily, weekly, and seasonal cycles that are not fully explained by physical variables alone. Accordingly, the dataset contains features representing the hour of the day, day of the week, week of the year and month.
+
+Several temporal features (e.g., hour of day, day of week) are inherently cyclical. To preserve their periodic structure and avoid artificial discontinuities at time boundaries, these variables are encoded using sine and cosine transformations of the corresponding period. This trigonometric encoding efficiently captures temporal proximity and enables the model to learn smooth recurring patterns~\cite{rodrigo_2025_skforecast, pedregosa_2011_scikit}. The resulting encoding is illustrated in Figure~\ref{fig:cyclic_encoding}.
+\begin{figure}[ht]
+    \centering
+    \input{figures/cyclic_encoding}
+    \caption{Cyclic Encoding of the hour feature.}
+    \label{fig:cyclic_encoding}
+\end{figure}
+
+Calendar effects are represented through public and school holidays as well as bridge days. Since public holidays vary across German federal states, a single feature is constructed by aggregating the number of states observing a holiday on each date. School holidays, which differ in timing and duration across regions, are included to account for systematic demand changes associated with reduced industrial activity and altered household behavior~\cite{johannsen_2025_schulferien}.
+
+In addition, statistical rolling features such as the mean and standard deviation over the preceding seven days are included, allowing the model to access summary statistics of recent demand behavior without learning them implicitly from raw lag values. The dataset further contains the grid load from the equivalent weekday one year prior, where the equivalent date refers not to a fixed 365-day offset but to the nearest matching weekday, ensuring comparability in weekly demand structure across years. 
+
+\paragraph*{Weather Data}
+Weather variables are included to capture the impact of meteorological conditions on electricity demand and renewable generation. The data is obtained via the Meteostat Python library~\cite{lamprecht_2025_meteostat} and compiled from multiple stations distributed across the 50Hertz control area to ensure adequate spatial coverage. The selected stations represent the north-eastern, north-western, central, south-eastern, and south-western parts of the region. For each timestamp weather observations from the nearest station are assigned, allowing regional variation in temperature, wind and solar conditions to be reflected in the dataset. While the data consists of realized weather observations, it is treated as a proxy for weather forecasts, as actual forecast data was not available.
+
+\paragraph*{Market Data}
+Market price data is obtained from the Energy-Charts API~\cite{burger_2025_energy-charts} and covers the DE/LU price zone. Until October 2018, Germany, Austria, and Luxembourg formed a joint bidding zone (DE/AT/LU), after which Austria became a separate market area. Consequently, two price series are available in the dataset. For consistency over the full observation period and since the focus is on electricity demand in Germany, these series are combined into a single day-ahead market price variable.
+
+The complete dataset can be found in the Appendix~\ref{app:dataset}.

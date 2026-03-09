@@ -1,0 +1,162 @@
+\begin{tikzpicture}
+    \begin{groupplot}[
+      group style={
+        group size=2 by 2,
+        horizontal sep=0.05cm,
+        vertical sep=0.05cm,
+      },
+      small axis,
+      width=0.6\linewidth,
+      height=0.5\imageheight,
+      grid=both,
+      ymin=8000, ymax=16000,
+      scaled y ticks=false,
+      xtick={0,1,2,3,4,5,6},
+      xticklabels={ $\mathrm{Mon.}$, $\mathrm{Tue.}$, $\mathrm{Wed.}$, $\mathrm{Thu.}$, $\mathrm{Fri.}$, $\mathrm{Sat.}$, $\mathrm{Sun.}$},
+      error bars/y dir=both,
+      error bars/y explicit,
+    ]
+    
+    \nextgroupplot[
+      xticklabels={},
+      ytick={10000,14000},
+    ]
+    \addplot[name path=lowS, draw=none, color=tabblue] coordinates {
+      (0,11700.5509215126-1885.4994100763)
+      (1,12246.8739741162-1636.6140234017)
+      (2,12215.8201104101-1598.5330199857)
+      (3,12163.7301398157-1760.7676988706)
+      (4,11966.0550820707-1764.6920651783)
+      (5,10656.3617157490-1288.8491039263)
+      (6,10022.0004752852-1326.6263477263)
+    };
+    \addplot[name path=highS, draw=none, color=tabblue] coordinates {
+      (0,11700.5509215126+1885.4994100763)
+      (1,12246.8739741162+1636.6140234017)
+      (2,12215.8201104101+1598.5330199857)
+      (3,12163.7301398157+1760.7676988706)
+      (4,11966.0550820707+1764.6920651783)
+      (5,10656.3617157490+1288.8491039263)
+      (6,10022.0004752852+1326.6263477263)
+    };
+    \addplot[draw=none, color=tabblue, fill opacity=0.2] fill between[of=lowS and highS];
+    \addplot[thick, color=tabblue] coordinates {
+      (0,11700.5509215126)
+      (1,12246.8739741162)
+      (2,12215.8201104101)
+      (3,12163.7301398157)
+      (4,11966.0550820707)
+      (5,10656.3617157490)
+      (6,10022.0004752852)
+    };
+    \node[anchor=north east, font=\scriptsize] at (axis description cs:1,1) {Spring};
+    
+    \nextgroupplot[
+      yticklabels={},
+      xticklabels={},
+    ]
+    \addplot[name path=lowSu, draw=none, color=tabblue] coordinates {
+      (0,11289.4928097345-1758.9508447551)
+      (1,11576.0158137317-1557.4125577151)
+      (2,11626.8676563487-1537.7452479029)
+      (3,11620.4147727273-1521.0103018355)
+      (4,11463.5467260013-1522.4054897042)
+      (5,9998.3093019583-1121.5123436609)
+      (6,9337.1979833547-1062.9314699704)
+    };
+    \addplot[name path=highSu, draw=none, color=tabblue] coordinates {
+      (0,11289.4928097345+1758.9508447551)
+      (1,11576.0158137317+1557.4125577151)
+      (2,11626.8676563487+1537.7452479029)
+      (3,11620.4147727273+1521.0103018355)
+      (4,11463.5467260013+1522.4054897042)
+      (5,9998.3093019583+1121.5123436609)
+      (6,9337.1979833547+1062.9314699704)
+    };
+    \addplot[draw=none, color=tabblue, fill opacity=0.2] fill between[of=lowSu and highSu];
+    \addplot[thick, color=tabblue] coordinates {
+      (0,11289.4928097345)
+      (1,11576.0158137317)
+      (2,11626.8676563487)
+      (3,11620.4147727273)
+      (4,11463.5467260013)
+      (5,9998.3093019583)
+      (6,9337.1979833547)
+    };
+    \node[anchor=north east, font=\scriptsize] at (axis description cs:1,1) {Summer};
+    
+    \nextgroupplot[
+      xlabel={},
+      ytick={10000,14000},
+      xticklabel style={rotate=90}
+    ]
+    \addplot[name path=lowA, draw=none, color=tabblue] coordinates {
+      (0,12213.0917467949-1911.4546982594)
+      (1,12479.5726427197-1778.6701457275)
+      (2,12470.7385379929-1679.9727490495)
+      (3,12576.6769563823-1739.2532337336)
+      (4,12397.4703335471-1681.9965967307)
+      (5,10886.2099230523-1299.0548962355)
+      (6,10242.5913523018-1317.6637702947)
+    };
+    \addplot[name path=highA, draw=none, color=tabblue] coordinates {
+      (0,12213.0917467949+1911.4546982594)
+      (1,12479.5726427197+1778.6701457275)
+      (2,12470.7385379929+1679.9727490495)
+      (3,12576.6769563823+1739.2532337336)
+      (4,12397.4703335471+1681.9965967307)
+      (5,10886.2099230523+1299.0548962355)
+      (6,10242.5913523018+1317.6637702947)
+    };
+    \addplot[draw=none, color=tabblue, fill opacity=0.2] fill between[of=lowA and highA];
+    \addplot[thick, color=tabblue] coordinates {
+      (0,12213.0917467949)
+      (1,12479.5726427197)
+      (2,12470.7385379929)
+      (3,12576.6769563823)
+      (4,12397.4703335471)
+      (5,10886.2099230523)
+      (6,10242.5913523018)
+    };
+    \node[anchor=north east, font=\scriptsize] at (axis description cs:1,1) {Autumn};
+    
+    \nextgroupplot[
+      xlabel={},
+      yticklabels={},
+      xticklabel style={rotate=90}
+    ]
+    \addplot[name path=lowW, draw=none, color=tabblue] coordinates {
+      (0,13069.0817726832-2052.8061840320)
+      (1,13252.2588824289-1895.5014777154)
+      (2,13377.6900000000-1912.8380539171)
+      (3,13289.2585649644-1875.3554274632)
+      (4,13158.9607558140-1864.8635028232)
+      (5,11770.2330073742-1378.7719075799)
+      (6,11237.1205929487-1422.5128227133)
+    };
+    \addplot[name path=highW, draw=none, color=tabblue] coordinates {
+      (0,13069.0817726832+2052.8061840320)
+      (1,13252.2588824289+1895.5014777154)
+      (2,13377.6900000000+1912.8380539171)
+      (3,13289.2585649644+1875.3554274632)
+      (4,13158.9607558140+1864.8635028232)
+      (5,11770.2330073742+1378.7719075799)
+      (6,11237.1205929487+1422.5128227133)
+    };
+    \addplot[draw=none, color=tabblue, fill opacity=0.2] fill between[of=lowW and highW];
+    \addplot[thick, color=tabblue] coordinates {
+      (0,13069.0817726832)
+      (1,13252.2588824289)
+      (2,13377.6900000000)
+      (3,13289.2585649644)
+      (4,13158.9607558140)
+      (5,11770.2330073742)
+      (6,11237.1205929487)
+    };
+    \node[anchor=north east, font=\scriptsize] at (axis description cs:1,1) {Winter};
+    
+    \end{groupplot}
+    \node[anchor=north, font=\scriptsize, yshift=-20pt] at ($(group c1r2.south east)!0.5!(group c2r2.south west)$) {Day of the Week};
+
+    \node[anchor=south, rotate=90, font=\scriptsize, yshift=22pt] at ($(group c1r1.north west)!0.5!(group c1r2.south west)$){Grid Load in MWh};
+\end{tikzpicture}

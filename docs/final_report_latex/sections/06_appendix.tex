@@ -1,0 +1,70 @@
+\appendix
+\section{Appendix}
+\label{app}
+
+\subsection{Complete Dataset}
+\label{app:dataset}
+Table~\ref{tab:dataset_overview} provides a high-level overview of the dataset structure, summarizing the different feature groups without listing individual weather stations or lag variables explicitly.
+
+\begin{table}[H]
+    \centering
+    \caption{Overview of dataset features grouped by category.}
+    \label{tab:dataset_overview}
+    \scriptsize
+    \begin{tabular}{p{4cm}L{10cm}}
+        \toprule
+        \textbf{Category} & \textbf{Features} \\
+        \midrule
+        Target variable & \texttt{grid\_load} \\
+
+        Calendar features & \texttt{holiday\_count}, \texttt{school\_holiday} \\
+
+        Temporal indices & \texttt{hour}, \texttt{day\_of\_week}, \texttt{week}, \texttt{month}, \texttt{day\_of\_year}, \texttt{roll\_mean\_72}, \texttt{roll\_std\_168},\texttt{roll\_min\_168}, \texttt{roll\_max\_168} \\
+
+        Market data & \texttt{day\_ahead\_price} \\
+
+        Weather data &
+        \texttt{\{station\_code\}\_temperature}, \texttt{\{station\_code\}\_dew\_point}, \texttt{\{station\_code\}\_relative\_humidity}, \texttt{\{station\_code\}\_precipitation}, \texttt{\{station\_code\}\_snow\_depth}, \texttt{\{station\_code\}\_wind\_direction}, \texttt{\{station\_code\}\_average\_wind\_speed}, \texttt{\{station\_code\}\_peak\_wind\_speed}, \texttt{\{station\_code\}\_average\_sea\_level\_air\_pressure}, \texttt{\{station\_code\}\_sunshine\_duration}, \texttt{\{station\_code\}\_weather\_condition\_code} \\
+
+        Generation forecasts &
+        \texttt{forecast\_wind\_offshore}, \texttt{forecast\_wind\_onshore}, \texttt{forecast\_solar}, \texttt{forecast\_other} \\
+
+        Cyclical encodings &
+        \texttt{hour\_sin}, \texttt{hour\_cos},
+        \texttt{day\_of\_week\_sin}, \texttt{day\_of\_week\_cos}, \texttt{week\_sin}, \texttt{week\_cos}, \texttt{month\_sin}, \texttt{month\_cos} \\
+
+        Lag features &
+        \texttt{grid\_load\_year\_1} -- \texttt{grid\_load\_year\_8} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Tuned Hyperparameters}
+\label{app:hyperparameters}
+Table~\ref{tab:hyperparams} summarizes the final hyperparameter configurations and selected lag structures for both gradient boosting models.
+\begin{table}[H]
+    \centering
+    \caption{Tuned hyperparameters of the LGBMRegressor and XGBRegressor and lag structure are obtained via Bayesian optimization.}
+    \label{tab:hyperparams}
+    \scriptsize
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Hyperparameter} & \textbf{LGBMRegressor} & \textbf{XGBRegressor} \\
+        \midrule
+        \texttt{learning\_rate} & 0.02415 & 0.02134 \\
+        \texttt{n\_estimators} & 2100 & 2800 \\
+        \texttt{max\_depth} & 6 & 6 \\
+        \texttt{subsample} & 0.735 & 0.771 \\
+        \texttt{colsample\_bytree} & 0.619 & 0.625 \\
+        \texttt{reg\_alpha} & $8.40 \times 10^{-5}$ & $1.49 \times 10^{-6}$ \\
+        \texttt{reg\_lambda} & $5.33 \times 10^{-5}$ & $2.46 \times 10^{-8}$ \\
+        \midrule
+        \texttt{num\_leaves} & 86 & -- \\
+        \texttt{min\_child\_samples} & 28 & -- \\
+        \texttt{min\_child\_weight} & -- & 27.17 \\
+        \texttt{gamma} & -- & 8.96 \\
+        \midrule
+        Lags & \multicolumn{2}{c}{$\{1, 2, \dots, 24, 48, 72, 96\}$} \\
+        \bottomrule
+    \end{tabular}
+\end{table}

@@ -1,0 +1,67 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        small axis,
+        xbar,
+        width=0.725\linewidth,
+        height=1.1\imageheight,
+        grid=both,
+        xlabel={Gain},
+        xmode=log,
+        log basis x=10,
+        xtickten={9,10,11,12,13},
+        xmin=1e9, xmax=1e13,
+        xtick={1e9,1e10,1e11,1e12,1e13},
+        xticklabels={$10^9$,$10^{10}$,$10^{11}$,$10^{12}$},
+        ytick=data,
+        y dir=reverse,
+        yticklabel style = {font=\ttfamily\tiny},
+        symbolic y coords={
+            lag\_1,
+            lag\_2,
+            grid\_load\_year\_1,
+            hour\_cos,
+            hour\_sin,
+            lag\_23,
+            lag\_24,
+            lag\_3,
+            hour,
+            day\_of\_week,
+            lag\_22,
+            forecast\_solar,
+            holiday\_count,
+            day\_of\_week\_sin,
+            lag\_96,
+            lag\_4,
+            lag\_12,
+            grid\_load\_year\_4,
+            grid\_load\_year\_2,
+            lag\_6,
+        },
+        bar width=5pt,
+        enlarge y limits=0.05,
+    ]
+    
+    \addplot+[draw=none, fill=tabblue] coordinates {
+    (4140980061184.1152343750,lag\_1)
+    (1046159810725.3007812500,lag\_2)
+    (241635122578.1933593750,grid\_load\_year\_1)
+    (150261650638.4902343750,hour\_cos)
+    (122069174444.2207031250,hour\_sin)
+    (115463645452.6201171875,lag\_23)
+    (106718147845.1191406250,lag\_24)
+    (61783782869.7226562500,lag\_3)
+    (52237462600.6757812500,hour)
+    (27222553406.6025390625,day\_of\_week)
+    (25703605194.7470703125,lag\_22)
+    (12964021181.0332031250,forecast\_solar)
+    (10326651285.3007793427,holiday\_count)
+    (9199451680.5976562500,day\_of\_week\_sin)
+    (7925020855.8789062500,lag\_96)
+    (7070932122.8144531250,lag\_4)
+    (5873023022.1035156250,lag\_12)
+    (5624483086.8593750000,grid\_load\_year\_4)
+    (5282667371.7265625000,grid\_load\_year\_2)
+    (4626659423.4804687500,lag\_6)
+      };
+    \end{axis}
+\end{tikzpicture}

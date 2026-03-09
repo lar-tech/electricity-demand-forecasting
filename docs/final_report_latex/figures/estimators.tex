@@ -1,0 +1,54 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        small axis,
+        width=\linewidth,
+        height=\imageheight,
+        ybar,
+        ymin=0,
+        ymax=9,
+        ylabel={MAPE in \%},
+        xlabel={Number of lags used},
+        symbolic x coords={24,72,168},
+        xtick=data,
+        xticklabels={$24 \ \mathrm{lags}$,$72 \ \mathrm{lags}$,$168 \ \mathrm{lags}$},
+        grid=major,
+        bar width=30pt,
+        enlarge x limits=0.25,
+        legend image code/.code={
+            \draw[fill=#1, draw=none] (0cm,-0.065cm) rectangle (0.18cm,0.115cm);},
+        legend style={
+            cells={anchor= base west},
+            legend cell align=left,
+            row sep=-2pt,         
+            }
+    ]
+    
+        \addplot+[draw=none, fill=tured, bar shift=-15pt] coordinates {
+        (24,3.57824859293752)
+        (72,3.756559156467786)
+        (168,3.7118938602545885)
+        };
+        \addlegendentry{LGBMRegressor with exog.}
+        
+        \addplot+[draw=none, fill=tured, opacity=0.25, bar shift=-15pt] coordinates {
+        (24,6.763164459422558)
+        (72,6.54438571366216)
+        (168,5.1746150821266296)
+        };
+        \addlegendentry{LGBMRegressor without exog.}
+        
+        \addplot+[draw=none, fill=tabblue, bar shift=+15pt] coordinates {
+        (24,3.686814691059596)
+        (72,3.82903905907972)
+        (168,3.6558896715335396)
+        };
+        \addlegendentry{XGBRegressor with exog.}
+        
+        \addplot+[draw=none, fill=tabblue, opacity=0.25, bar shift=+15pt] coordinates {
+        (24,6.646289995322416)
+        (72,6.496443889386017)
+        (168,5.384366767047631)
+        };
+        \addlegendentry{XGBRegressor without exog.}
+    \end{axis}
+\end{tikzpicture}

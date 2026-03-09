@@ -1,0 +1,129 @@
+\section{Forecasting Model}
+\label{sec:forcasting_model_training}
+\ihead{Forecasting Model}
+Time series forecasting aims to predict future values of a target variable using historical observations and exogenous information. In contrast to standard regression, time series data is temporally ordered and exhibits serial dependencies, which violate the assumption of independent and identically distributed samples~\cite{fotakis_2021_backtesting}. In the following section, the evaluation procedure is described, as conventional cross-validation is not applicable to causal time series. Furthermore, different forecasting strategies and regression estimators are analyzed, and the impact of exogenous variables on model accuracy is investigated.
+
+\subsection{Backtesting}
+\label{sec:backtesting}
+To evaluate forecasting performance under realistic operational conditions, a backtesting framework is applied. Backtesting simulates the deployment of a forecasting model by repeatedly training it on historical data and generating forecasts for future time horizons~\cite{fotakis_2021_backtesting}. In this project, a rolling-origin evaluation strategy is used. At each iteration, the model is trained on all data available up to a given point in time and then used to predict electricity demand for the subsequent 24 hours at an hourly resolution. The training window is incrementally extended, and the procedure is repeated over the full evaluation period from 2015 to 2023. Forecast performance is subsequently evaluated on an unseen test period from January 1, 2024 to December 31, 2024. An additional option is to refit the model at each forecasting step to better reflect practical operation, where models are regularly updated as new data becomes available. This approach is applied only to the final model, as using it in earlier experiments would unnecessarily increase computational cost.
+
+Forecast accuracy is assessed using multiple error metrics. The \ac{MSE} penalizes large deviations more strongly, thereby highlighting unstable predictions. It is commonly used during tuning and fitting because it remains stable throughout both processes. Additionally, the \ac{MAPE} provides a relative measure that facilitates comparison across different demand levels. The \ac{MSE} is defined as
+\begin{equation}
+    \mathrm{MSE} = \frac{1}{N} \sum_{t=1}^{N} (y_t - \hat{y}_t)^2,
+    \label{eq:mse}
+\end{equation}
+while the \ac{MAPE} is given by
+\begin{equation}
+    \mathrm{MAPE} = \frac{1}{N} \sum_{t=1}^{N} \left| \frac{y_t - \hat{y}_t}{y_t} \right|.
+    \label{eq:mape}
+\end{equation}
+The temporal split between training and testing data is summarized in Table~\ref{tab:data_split}. The training period spans multiple years to capture long-term seasonal patterns and structural variability, while the test period comprises a full calendar year to enable a comprehensive and unbiased evaluation under unseen conditions.
+\begin{table}[H]
+    \centering
+    \caption{Temporal split of training and test data used for backtesting and evaluation.}
+    \label{tab:data_split}
+    \begin{tabular}{lccc}
+        \toprule
+        \textbf{Dataset} & \textbf{Start date} & \textbf{End date} & \textbf{Duration}\\
+        \midrule
+        Training period & 2015-01-01 & 2023-12-31 & 9 years\\
+        Test period     & 2024-01-01 & 2024-12-31 & 1 year\\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Seasonal Na\"{i}ve Forecaster}
+\label{subsec:baseline}
+A simple baseline model is introduced to establish a reference level of forecasting performance. Baseline models are used to assess whether more complex approaches provide meaningful improvements over simple heuristics~\cite{beck_2025_naive}.
+
+As a baseline, a seasonal na\"{i}ve forecasting method is employed, which predicts future electricity demand by reusing observations from the same hour in previous periods. This approach exploits recurring seasonal patterns and is commonly used as a benchmark in short-term electricity demand forecasting~\cite{beck_2025_naive}. The forecasting principle is illustrated in Figure~\ref{fig:baseline}. Using this baseline model, an average forecasting error of 8.57\% is obtained, measured over the entire year of 2024. This result serves as a lower performance bound that all advanced models are expected to outperform.
+\begin{figure}[ht]
+    \centering
+    \input{figures/baseline_model}
+    \caption{Seasonal Na\"{i}ve Forecaster with \acs{MAPE} of 8.57\%.}
+    \label{fig:baseline}
+\end{figure}
+
+\subsection{Recursive Multi-Step Forecaster}
+\label{subsec:forecaster} 
+To achieve the objective of forecasting multiple values at once, there are several strategies to handle this kind of problem. Two commonly used approaches are the so-called recursive and direct forecasters. Both strategies come with their own advantages and trade-offs. The direct approach can yield more accurate forecasts for longer horizons, but it is computationally expensive, since a separate model has to be trained for each forecast step. To decide whether a recursive forecasting strategy is appropriate for this problem, it is helpful to analyze the autocorrelation structure of the time series.
+
+\begin{figure}[b!]
+    \centering
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \input{figures/autocorrelation}
+        \caption{Autocorrelation.}
+        \label{fig:autocorrelation}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\linewidth}
+        \centering
+        \input{figures/partial_autocorrelation}
+        \caption{Partial Autocorrelation.}
+        \label{fig:partial_autocorrelation}
+    \end{subfigure}
+    \caption{Autocorrelation and partial autocorrelation of the grid load time series.}
+    \label{fig:correlation}
+\end{figure}
+The \ac{ACF} in Figure~\ref{fig:autocorrelation} exhibits a clear periodic pattern, indicating strong temporal dependencies across multiple time lags. Pronounced peaks at multiples of 24 hours highlight daily seasonality, suggesting that past demand values from previous days contain substantial information about future demand. The \ac{PACF} in Figure~\ref{fig:partial_autocorrelation} further shows that only a limited number of lower-order lags have a significant direct influence, while higher-order correlations are largely explained indirectly through these lags. Together, these observations indicate a strong autoregressive structure in the data and support the use of a recursive forecasting approach for the considered prediction horizon.
+
+The recursive approach uses a single model and feeds previous predictions back into the model to generate the full forecast horizon. In Figure~\ref{fig:recursive} an example is visualized. The model sees the blue circled values and predicts the new value. The blue circled values are the lags and indicate how much the model is allowed to look back into the past. Next it uses the prediction and the other two lags before to predict the next value like a moving window.
+\begin{figure}[H]
+    \centering
+    \input{figures/recursive}
+    \caption{Recursive multi-step forecasting.}
+    \label{fig:recursive}
+\end{figure}
+
+\subsection{Regression Estimators} 
+\label{subsec:regressor}
+The forecaster defines which lagged values and exogenous features are provided as inputs to the predictive model. The actual component responsible for estimating future values of the time series is the regression estimator. Various types of estimators can be employed, including linear models and tree-based methods, each associated with specific advantages and limitations.
+
+As a representative linear approach, Ridge regression is considered. This model captures linear relationships between lagged electricity demand and future demand values. However, Ridge regression requires a complete feature matrix without missing values. This assumption cannot always be satisfied when incorporating exogenous variables such as weather data or market prices. Consequently, Ridge regression is not considered further.
+
+Tree-based gradient boosting methods are therefore examined, specifically \ac{LGBM} and \ac{XGB}. Both are based on the gradient boosting framework~\cite{hastie_2001_elements}, which constructs an additive model by sequentially fitting weak learners to the negative gradient of the loss function. Starting from an initial estimate $F_1(x) = \bar{y}$, each subsequent learner $f_{m+1}$ is trained on the pseudo-residuals
+\begin{equation}
+    \hat{r}_{mi} = -\left. \frac{\partial \mathcal{L}(y_i, F(x_i))}{\partial F(x_i)} \right|_{F = F_m}, \quad i \in \{1, \dots, N\},
+\end{equation}
+and the model is updated as $F_{m+1}(x) = F_m(x) + \gamma_{m+1} f_{m+1}(x)$, where the step size $\gamma_{m+1}$ is chosen to minimize the total loss. Compared to ensemble methods such as random forests, gradient boosting estimators offer substantially faster training times while retaining the ability to model complex, nonlinear relationships. \ac{LGBM} employs histogram-based splitting in combination with a leaf-wise tree growth strategy, resulting in high computational efficiency~\cite{shi_2025_lightgbm}. In contrast, \ac{XGB} applies stronger regularization and a level-wise tree growth strategy, which leads to more stable model behavior at the cost of increased computational effort~\cite{chen_2016_xgboost}.
+
+Another relevant aspect is the selection of the number of lagged values used as model inputs, as well as the contribution of exogenous features to forecasting performance. As illustrated in Figure~\ref{fig:estimators}, models that incorporate exogenous variables consistently achieve lower \ac{MAPE} values than their counterparts relying solely on lagged demand values, across all evaluated lag configurations. This observation suggests that exogenous information provides additional predictive value for the forecasting task. In contrast, the influence of the number of lags is less conclusive. Increasing the number of lagged inputs does not lead to a systematic improvement in performance and no monotonic relationship between lag count and forecast accuracy can be observed. These results indicate that lag selection represents a non-trivial hyperparameter choice and should be optimized carefully rather than increased arbitrarily.
+\begin{figure}[ht]
+    \centering
+    \input{figures/estimators}
+    \caption{Estimator comparison with exogenous features and different lags.}
+    \label{fig:estimators}
+\end{figure}
+
+\subsection{Hyperparameter Tuning}
+\label{subsec:tuning}
+After selecting the estimator and the overall model structure, the next step is to fine-tune the model’s hyperparameters. Up to this point, all models have been evaluated using default parameter settings. Since the number of hyperparameters and possible lag configurations is large, manual tuning or exhaustive evaluation would be highly time-consuming and computationally inefficient.
+
+Two common approaches for hyperparameter tuning are grid search and Bayesian optimization. Grid search evaluates all combinations of a predefined parameter grid, which becomes infeasible in high-dimensional search spaces. Therefore, Bayesian hyperparameter optimization is employed, as it enables a more efficient exploration of the parameter space by incorporating information from previous evaluations.
+
+Formally, Bayesian optimization aims to minimize an objective function
+\begin{equation}
+    \theta^* = \arg\min_{\theta \in \Theta} f(\theta),
+\end{equation}
+where $f(\theta)$ denotes the validation error of the model with hyperparameters $\theta$. A probabilistic surrogate model, typically a Gaussian process, is used to approximate $f(\theta)$~\cite{rasmussen_2006_gaussian}. Based on this surrogate, an acquisition function $\alpha(\theta)$ determines the next hyperparameter configuration to evaluate by balancing exploration and exploitation.
+
+For the optimization objective, the \ac{MSE} is used instead of the \ac{MAPE}. The \ac{MAPE}, as defined in Equation~\ref{eq:mape}, can become unstable when the true values $y_t$ are close to zero, as small absolute errors may lead to disproportionately large percentage errors. In contrast, the \ac{MSE}, as described in Equation~\ref{eq:mse}, provides a smoother and more stable optimization objective, which is particularly important for Bayesian optimization, as the surrogate model relies on consistent error evaluations.
+
+The Bayesian optimization was performed using 100 trials for each estimator, requiring approximately 80 minutes of computation time in total. As illustrated in Figure~\ref{fig:tuning}, the tuning process results in a slight but consistent reduction of the validation error for both models over successive trials. In terms of final forecasting performance, the tuned \ac{XGB} model reduces the MAPE from 3.66\% to 3.15\%, while the tuned \ac{LGBM} model achieves a reduction from 3.71\% to 3.16\%. Although the absolute improvements are moderate, they are consistent across trials and justify the additional computational effort associated with hyperparameter tuning. A complete list of the tuned hyperparameters as well as optimal lags is provided in Appendix~\ref{app:hyperparameters}.
+\begin{figure}[H]
+    \centering
+    \input{figures/tuning}
+    \caption{Bayesian Optimization with 100 trials to efficiently explore the hyperparameter space.}
+    \label{fig:tuning}
+\end{figure}
+
+\subsection{Final Model}
+\label{subsec:final}
+\begin{figure}[b!]
+    \centering
+    \input{figures/final_model}
+    \caption{Tuned XGBRegressor with a \acs{MAPE} of 2.94\%.}
+    \label{fig:final_model}
+\end{figure}
+The best-performing model achieves a \ac{MAPE} of 2.94\%. This result is obtained using an iterative refitting strategy, in which the model is retrained at each forecasting step using all newly available observations. As a consequence, newly observed data are continuously incorporated into the training set, allowing the model to adapt to evolving demand patterns over time. The final forecasting setup consists of a tuned \ac{XGB} estimator embedded in an autoregressive forecasting framework and augmented with all available exogenous features. The resulting performance is illustrated in Figure~\ref{fig:final_model}. Refitting and evaluating the model over a one-year period requires approximately 40 minutes of computation time when using two CPU cores, representing a reasonable trade-off between predictive accuracy and computational effort.

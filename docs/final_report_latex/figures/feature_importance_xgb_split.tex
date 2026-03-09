@@ -1,0 +1,62 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        small axis,
+        xbar,
+        width=0.725\linewidth,
+        height=1.1\imageheight,
+        grid=both,
+        xlabel={Split Count},
+        xmin=0, xmax=6500,
+        ytick=data,
+        y dir=reverse,
+        yticklabel style = {font=\ttfamily\tiny},
+        symbolic y coords={
+            lag\_1,
+            hour\_sin,
+            lag\_2,
+            hour,
+            forecast\_solar,
+            lag\_24,
+            grid\_load\_year\_1,
+            hour\_cos,
+            forecast\_wind\_offshore,
+            grid\_load\_year\_5,
+            grid\_load\_year\_4,
+            lag\_3,
+            grid\_load\_year\_3,
+            day\_of\_year,
+            forecast\_wind\_onshore,
+            day\_ahead\_price,
+            grid\_load\_year\_2,
+            forecast\_other,
+            10091\_peak\_wind\_speed,
+            10131\_peak\_wind\_speed,
+        },
+        bar width=5pt,
+        enlarge y limits=0.05,
+    ]
+    
+    \addplot+[draw=none, fill=tabblue] coordinates {
+    (6229.0000000000,lag\_1)
+    (3992.0000000000,hour\_sin)
+    (3793.0000000000,lag\_2)
+    (3061.0000000000,hour)
+    (2773.0000000000,forecast\_solar)
+    (2312.0000000000,lag\_24)
+    (2305.0000000000,grid\_load\_year\_1)
+    (2067.0000000000,hour\_cos)
+    (1972.0000000000,forecast\_wind\_offshore)
+    (1925.0000000000,grid\_load\_year\_5)
+    (1891.0000000000,grid\_load\_year\_4)
+    (1833.0000000000,lag\_3)
+    (1725.0000000000,grid\_load\_year\_3)
+    (1712.0000000000,day\_of\_year)
+    (1704.0000000000,forecast\_wind\_onshore)
+    (1664.0000000000,day\_ahead\_price)
+    (1599.0000000000,grid\_load\_year\_2)
+    (1553.0000000000,forecast\_other)
+    (1530.0000000000,10091\_peak\_wind\_speed)
+    (1486.0000000000,10131\_peak\_wind\_speed)
+      };
+    \end{axis}
+\end{tikzpicture}

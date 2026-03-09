@@ -1,0 +1,99 @@
+\begin{tikzpicture}[>=Stealth]
+    % Plot 1
+    \begin{axis}[
+        name=axis1,
+        small axis,
+        width=0.39\linewidth,
+        height=\imageheight,
+        grid=both,
+        xlabel={Hour of the Day},
+        ylabel={Electricity Demand in MWh},
+        xmin=-0.5, xmax=14.5,
+        ymin=9100, ymax=13200,
+        xtick={0,1,...,20},
+        xticklabels={$18$,$19$,$20$,$21$,$22$,$23$,$0$,$1$,$2$,$3$,$4$,$5$,$6$,$7$,$8$,$9$,$10$,$11$,$12$,$13$,$14$},
+        xticklabel style={font=\tiny},
+        legend image code/.code={
+            \draw[only marks, mark repeat=1, mark phase=1, #1] 
+            plot coordinates {(0.3cm,0cm)};}
+        ]
+    % Training data
+    \addplot+[color=black, mark=*, mark size=1pt, mark options={fill=black}, forget plot] coordinates {
+        (1,13100) (2,13000) (3,12200) (4,11400) (5,10600) (6,10000)
+    };
+    \addplot[only marks, mark=o, mark size=3pt, mark options={draw=tabblue, fill=none, line width=1pt}, forget plot
+    ] coordinates {(4,11400) (5,10600) (6,10000)};
+    \addplot+[color=tured, mark=*, mark size=1pt, mark options={fill=tured}] coordinates {(7,9800)};
+    \draw[color=tured, -] (axis cs:6,10000) -- (axis cs:7,9800);
+    \node[font=\tiny, text=tured] at (axis cs:9,10500) {Prediction $t+1$};
+    \end{axis}
+
+    % Plot 2
+    \begin{axis}[
+        name=axis2,
+        at={(axis1.north east)},
+        anchor=north west,
+        xshift=0.1cm,
+        small axis,
+        width=0.39\linewidth,
+        height=\imageheight,
+        grid=both,
+        xlabel={Hour of the Day},
+        ylabel = {},
+        xmin=-0.5, xmax=14.5,
+        ymin=9100, ymax=13200,
+        xtick={0,1,...,20},
+        xticklabels={$18$,$19$,$20$,$21$,$22$,$23$,$0$,$1$,$2$,$3$,$4$,$5$,$6$,$7$,$8$,$9$,$10$,$11$,$12$,$13$,$14$},
+        xticklabel style={font=\tiny},
+        yticklabels={},
+        ]
+    % Training data
+    \addplot+[color=black, mark=*, mark size=1pt, mark options={fill=black}, forget plot] coordinates {
+        (1,13100) (2,13000) (3,12200) (4,11400) (5,10600) (6,10000)
+    };
+    \addplot[only marks, mark=o, mark size=3pt, mark options={draw=tabblue, fill=none, line width=1pt}, forget plot
+    ] coordinates {(5,10600) (6,10000) (7,9800)};
+    \addplot+[color=tured, mark=*, mark size=1pt, mark options={fill=tured}] coordinates {(7,9800) (8,9500)};
+    \draw[color=tured, -] (axis cs:6,10000) -- (axis cs:7,9800);
+    \node[font=\tiny, text=tured] at (axis cs:10,10500) {Prediction $t+2$};
+    \end{axis}
+    
+    % Plot 3
+    \begin{axis}[
+        name=axis3,
+        at={(axis2.north east)},
+        anchor=north west,
+        xshift=0.1cm,
+        small axis,
+        width=0.39\linewidth,
+        height=\imageheight,
+        grid=both,
+        xlabel={Hour of the Day},
+        ylabel = {},
+        xmin=-0.5, xmax=14.5,
+        ymin=9100, ymax=13200,
+        xtick={0,1,...,20},
+        xticklabels={$18$,$19$,$20$,$21$,$22$,$23$,$0$,$1$,$2$,$3$,$4$,$5$,$6$,$7$,$8$,$9$,$10$,$11$,$12$,$13$,$14$},
+        xticklabel style={font=\tiny},
+        yticklabels={},
+        legend image code/.code={
+            \draw[only marks, mark repeat=1, mark phase=1, #1] 
+            plot coordinates {(0.3cm,0cm)};}
+        ]
+    \legend{Training Data, Lags, Predictions}
+    
+    \addlegendimage{only marks, color=black, mark=*, mark options={fill=black, fill opacity=1}}
+    \addlegendimage{only marks, mark=o, mark options={draw=tabblue, fill=none, line width=1pt}}
+    \addlegendimage{only marks, color=tured, mark=*, mark options={fill=tured, fill opacity=1}}
+        
+    \addplot+[color=black, mark=*, mark size=1pt, mark options={fill=black}, forget plot] coordinates {
+        (1,13100) (2,13000) (3,12200) (4,11400) (5,10600) (6,10000)
+    };
+    \addplot[only marks, mark=o, mark size=3pt, mark options={draw=tabblue, fill=none, line width=1pt}, forget plot
+    ] coordinates {(6,10000) (7,9800) (8,9500)};
+    \addplot+[color=tured, mark=*, mark size=1pt, mark options={fill=tured}] coordinates {(7,9800) (8,9500) (9,9300)};
+    \draw[color=tured, -] (axis cs:6,10000) -- (axis cs:7,9800);
+    \node[font=\tiny, text=tured] at (axis cs:11,10500) {Prediction $t+3$};
+    \end{axis}
+   
+\end{tikzpicture}
