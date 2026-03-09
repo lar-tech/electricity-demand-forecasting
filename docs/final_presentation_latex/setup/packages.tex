@@ -1,0 +1,141 @@
+\usetheme[progressbar=frametitle]{metropolis}
+\usepackage{appendixnumberbeamer}
+\usepackage{booktabs}
+\usepackage{subcaption}
+\usepackage[scale=2]{ccicons}
+\usepackage{hyperref}
+\usepackage{fontawesome5}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{listings}
+\lstset{%
+   % basicstyle=\scriptsize\ttfamily,
+   basicstyle=\small\ttfamily,
+   % basicstyle = \footnotesize\ttfamily,
+   keywordstyle=\bfseries\ttfamily\color{NavyBlue},
+   stringstyle=\color{Rhodamine}\ttfamily,
+   commentstyle=\color{Green}\ttfamily,
+   emph={square}, 
+   emphstyle=\color{blue}\texttt,
+   emph={[2]root,base},
+   emphstyle={[2]\color{yac}\texttt},
+   language=Python,%
+   tabsize=2,%
+   basicstyle=\footnotesize\ttfamily,%
+   numbers=left,%
+   numberfirstline,%
+   breaklines=true,%
+   breakatwhitespace=false,%
+   linewidth=\textwidth,%
+   xleftmargin=0.075\textwidth,%
+   frame=tlrb,%
+   captionpos=b,%
+   showstringspaces=false
+}
+\usepackage{xspace}
+\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usetikzlibrary{arrows.meta, positioning, calc}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot, groupplots, colormaps}
+\pgfplotsset{compat=1.9}
+
+% nicer math font
+\usepackage{unicode-math}
+\setmathfont{Latin Modern Math}
+
+% custom colors
+\definecolor{tured}{RGB}{180,41,42}
+\definecolor{tugray}{RGB}{39,54,58}
+\definecolor{fontcolor}{RGB}{42,54,57}
+\definecolor{tabblue}{rgb}{0.1216, 0.4667, 0.7059}
+\definecolor{taborange}{rgb}{1.0000, 0.4980, 0.0549}
+\definecolor{tabgreen}{rgb}{0.1725, 0.6275, 0.1725}
+\definecolor{tabred}{rgb}{0.8392, 0.1529, 0.1569}
+\definecolor{tabpurple}{rgb}{0.5804, 0.4039, 0.7412}
+
+% custom template
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{title separator}{fg=tured}
+\setbeamercolor{progress bar}{fg=tugray,bg=tugray!25}
+\setbeamercolor{frametitle}{bg=tured, fg=white}
+\makeatletter
+\setlength{\metropolis@titleseparator@linewidth}{2pt}
+\setlength{\metropolis@progressonsectionpage@linewidth}{2pt}
+\setlength{\metropolis@progressinheadfoot@linewidth}{2pt}
+\makeatother
+\pdfstringdefDisableCommands{%
+  \def\translate#1{#1}%
+}
+\setbeamertemplate{frame footer}{\insertsubtitle \ | \inserttitle}
+
+% Citations
+\RequirePackage{csquotes}
+\RequirePackage[style=ieee,doi=true,isbn=false,url=false,mincitenames=1,maxcitenames=3,minbibnames=10,maxbibnames=10,citestyle=numeric-comp]{biblatex}
+\setbeamerfont{bibliography entry}{size=\normalsize}
+\setbeamerfont{bibliography item}{size=\normalsize}
+\setbeamerfont{bibliography entry title}{size=\normalsize, series=\mdseries}
+\DeclareFieldFormat [article,book,inbook,incollection,proceedings,inproceedings,report,thesis,online,misc,software]{title}{\mkbibemph{#1}}
+\setbeamerfont{bibliography entry author}{size=\normalsize}
+\setbeamerfont{bibliography entry location}{size=\normalsize}
+\setbeamerfont{bibliography entry note}{size=\normalsize}
+\setbeamercolor{bibliography entry}{fg=normal text.fg}
+\setbeamercolor{bibliography item}{fg=normal text.fg}
+\setbeamercolor{bibliography entry title}{fg=normal text.fg}
+\setbeamercolor{bibliography entry author}{fg=normal text.fg}
+\setbeamercolor{bibliography entry location}{fg=normal text.fg}
+\setbeamercolor{bibliography entry note}{fg=normal text.fg}
+\DeclareFieldFormat{sentencecase}{#1}
+\DeclareFieldFormat{doi}{\href{https://doi.org/#1}{DOI:  \mkbibemph{#1}}}
+\DeclareFieldFormat{title}{#1}
+\RequirePackage{xpatch}
+\xpatchbibmacro{textcite}{\addspace}{\addnbspace}{}{}
+\xpatchbibmacro{Textcite}{\addspace}{\addnbspace}{}{}
+\DefineBibliographyStrings{english}{
+	andothers = et~al\adddot\addspace
+}
+\bibliography{setup/references}
+
+% Plotting
+\pgfplotsset{
+    small axis/.style={
+        legend style={
+            at={(1,1)},
+            anchor=north east,
+            xshift=-3pt,
+            yshift=-3pt,
+            font=\tiny\selectfont,
+            rounded corners=2pt,
+            fill=white,
+            fill opacity=0.7,
+            text opacity=1,
+            draw=black!20,
+            row sep=0pt,         
+            legend image code/.code={\draw plot coordinates {(0cm,0cm) (0.3cm,0cm)};},
+        },
+        label style={font=\scriptsize},
+        scaled ticks=false,
+        /pgf/number format/.cd,
+            assume math mode=true,
+            fixed,
+            precision=0,
+            1000 sep={},
+        tick label style={font=\sffamily\scriptsize},
+    },
+    colormap={shap}{
+        rgb255=(0,138,250)
+        rgb255=(0,124,245)
+        rgb255=(35,108,234)
+        rgb255=(97,89,218)
+        rgb255=(132,66,197)
+        rgb255=(155,34,172)
+        rgb255=(186,0,159)
+        rgb255=(213,0,142)
+        rgb255=(233,0,123)
+        rgb255=(248,0,102)
+        rgb255=(255,0,81)
+    }
+}
+\newlength{\imageheight}
+\setlength{\imageheight}{5cm}
+

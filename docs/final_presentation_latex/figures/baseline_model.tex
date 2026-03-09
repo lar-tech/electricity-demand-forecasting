@@ -1,0 +1,28 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        small axis,
+        width=0.6\linewidth, height=\imageheight,
+        date coordinates in=x,
+        grid=both,
+        ylabel={Grid Load in MWh},
+        xmin={2024-03-04},
+        xmax={2024-03-11},
+        ymin={8000},
+        ymax={16000},
+        xtick={2024-03-04, 2024-03-05, 2024-03-06, 2024-03-07, 2024-03-08, 2024-03-09, 2024-03-10, 2024-03-11},
+        xticklabels={{04\\Mar\\2024}, 05, 06, 07, 08, 09, 10, 11},
+        xticklabel style={align=center},
+        ]
+    
+    \pgfplotstableread[col sep=comma]{figures/prediction_results.csv}\loaded
+    
+    % grid load
+    \addplot[color=tabblue, thick, no markers] table[x=Datetime, y=Actual Grid Load]\loaded;
+    \addlegendentry{Actual}
+
+    % prediction
+    \addplot[color=tured, thick, no markers, dashed] table[x=Datetime, y=Seasonal Naive Forecast]\loaded;
+    \addlegendentry{Forecast}
+    
+    \end{axis}
+\end{tikzpicture}

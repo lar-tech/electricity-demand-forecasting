@@ -1,0 +1,30 @@
+\begin{tikzpicture}[
+    >=Stealth,
+    block/.style = {draw, fill=white, rectangle, minimum height=0.75cm, minimum width=1.4cm, rounded corners=2pt, text opacity=1},
+    tmp/.style  = {coordinate},
+    font=\footnotesize,
+    ]
+
+    \node [block, fill=tabblue, fill opacity=0.2] (power_sources) {\shortstack{Power\\Sources}};
+    \node [above=0cm of power_sources.north] (exog_features) {\textcolor{tabblue}{Exogenous Feature}};
+    \node [block, fill=tabblue, fill opacity=0.2, below=0.1cm of power_sources] (weather) {Weather};
+    \node [block, fill=tabblue, fill opacity=0.2, below=0.1cm of weather] (temp_features) {\shortstack{Temporal\\Features}};
+    \node [block, fill=tabblue, fill opacity=0.2, below=0.1cm of temp_features] (market_data) {\shortstack{Market\\Data}};
+    \node [block, right=0.4cm of $(weather.east)!0.5!(temp_features.east)$] (model) {Model};
+    \node [block, right=0.4cm of model, fill=tured, fill opacity=0.2] (grid_load) {Grid Load};
+    
+    % Arrows
+    \node[tmp, right=0.2cm of $(weather.east)!0.5!(temp_features.east)$] (center) {};
+    \node[tmp, right=0.2cm of power_sources] (tmp1) {};
+    \node[tmp, right=0.2cm of weather.east] (tmp2) {};
+    \node[tmp, right=0.2cm of temp_features.east] (tmp3) {};
+    \node[tmp, right=0.2cm of market_data] (tmp4) {};
+    \node[tmp, above=0.4cm of grid_load.north] (tmp5) {};
+    \node[tmp, above=0.4cm of model.north] (tmp6) {};
+    \draw[->] (power_sources) -- (tmp1) -- (center) -- (model);
+    \draw[-] (weather.east) -- (tmp2);
+    \draw[-] (temp_features.east) -- (tmp3);
+    \draw[-] (market_data.east) -- (tmp4) -- (center);
+    \draw [->] (model) -- (grid_load);
+    \draw[->, dashed] (grid_load.north) -- (tmp5) -- node[midway, above] {\textcolor{tured}{Lagged Time-Series}} (tmp6) -- (model.north);
+\end{tikzpicture}

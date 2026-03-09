@@ -1,0 +1,47 @@
+\begin{tikzpicture}
+    \begin{axis}[
+        small axis,
+        xbar,
+        width=0.9\linewidth,
+        height=\imageheight,
+        grid=both,
+        xlabel={Gain},
+        xmode=log,
+        log basis x=10,
+        xtickten={6,7,8,9},
+        xmin=1e7, xmax=1e9,
+        xtick={1e7,1e8,1e9},
+        xticklabels={10\textsuperscript{7},10\textsuperscript{8},10\textsuperscript{9}},
+        ytick=data,
+        y dir=reverse,
+        yticklabel style = {font=\tiny},
+        symbolic y coords={
+            lag\_1,
+            lag\_2,
+            lag\_24,
+            grid\_load\_year\_1,
+            lag\_3,
+            lag\_23,
+            hour\_cos,
+            day\_of\_week,
+            holiday\_count,
+            hour\_sin,
+        },
+        bar width=5pt,
+        enlarge y limits=0.05,
+    ]
+    
+    \addplot+[draw=none, fill=tabblue] coordinates {
+        (564878912,lag\_1)
+        (173156448,lag\_2)
+        (107422952,lag\_24)
+        (95348712,grid\_load\_year\_1)
+        (93040800,lag\_3)
+        (88304952,lag\_23)
+        (51268784,hour\_cos)
+        (36462668,day\_of\_week)
+        (24996338,holiday\_count)
+        (23580398,hour\_sin)
+        };
+    \end{axis}
+\end{tikzpicture}
